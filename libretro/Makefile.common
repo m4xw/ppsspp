@@ -1,8 +1,9 @@
 FFMPEGDIR		= $(CORE_DIR)/ffmpeg
 LIBRETRODIR		= $(CORE_DIR)/libretro
+RETROCOMMONDIR	= $(CORE_DIR)/libretro/libretro-common
 COREDIR			= $(CORE_DIR)/Core
 COMMONDIR		= $(CORE_DIR)/Common
-GPUCOMMONDIR		= $(CORE_DIR)/GPU/Common
+GPUCOMMONDIR    = $(CORE_DIR)/GPU/Common
 GPUDIR			= $(CORE_DIR)/GPU
 EXTDIR			= $(CORE_DIR)/ext
 NATIVEDIR		= $(EXTDIR)/native
@@ -24,7 +25,9 @@ INCFLAGS += \
 	-I$(EXTDIR)/libkirk \
 	-I$(EXTDIR)/xbrz \
 	-I$(EXTDIR)/xxhash \
-	-I$(EXTDIR)/glew
+	-I$(EXTDIR)/glew \
+	-I$(RETROCOMMONDIR)/include \
+	-I$(RETROCOMMONDIR)
 
 ifeq ($(PLATFORM_EXT), android)
 	INCFLAGS += -I$(NATIVEDIR)/ext/libzip
@@ -85,13 +88,18 @@ ifeq ($(PLATFORM_EXT), android)
 		$(NATIVEDIR)/ext/libzip/zip_unchange_data.c
 
 	SOURCES_C +=\
-		$(NATIVEDIR)/gfx_es2/gl3stub.c \
-		$(NATIVEDIR)/math/fast/fast_math.c \
-		$(NATIVEDIR)/math/fast/fast_matrix.c
+		$(NATIVEDIR)/gfx_es2/gl3stub.c
 endif
 
-SOURCES_C += $(EXTDIR)/glew/glew.c
+SOURCES_C += $(RETROCOMMONDIR)/glsym/glsym_gl.c \
+		$(RETROCOMMONDIR)/glsym/rglgen.c \
+		$(NATIVEDIR)/math/fast/fast_math.c \
+		$(NATIVEDIR)/math/fast/fast_matrix.c
 
+SOURCES_CXX += $(COMMONDIR)/GL/GLInterface/EGL.cpp \
+			$(COMMONDIR)/GL/GLInterface/EGLSwitch.cpp \
+			$(COMMONDIR)/GL/GLInterface/GLInterface.cpp
+			
 SOURCES_C += \
 	$(EXTDIR)/libkirk/AES.c \
 	$(EXTDIR)/libkirk/amctrl.c \
@@ -513,7 +521,7 @@ ifeq ($(WITH_DYNAREC),1)
 				      $(NATIVEDIR)/ext/libpng17/arm/filter_neon.S
 		endif
 	else ifeq ($(TARGET_ARCH),arm64)
-      DYNAFLAGS += -D_ARCH_64
+      DYNAFLAGS += -D_ARCH_64 -DARM64
       SOURCES_CXX += $(COMMONDIR)/Arm64Emitter.cpp \
 		     $(COMMONDIR)/ArmCPUDetect.cpp \
 		     $(COREDIR)/MIPS/ARM64/Arm64Asm.cpp \
@@ -533,13 +541,9 @@ ifeq ($(WITH_DYNAREC),1)
 			SOURCES_CXX   += \
 					 $(COREDIR)/MIPS/ARM/ArmCompVFPUNEON.cpp \
 					 $(COREDIR)/MIPS/ARM/ArmCompVFPUNEONUtil.cpp \
+					 $(COREDIR)/Util/AudioFormatNEON.cpp \
 					 $(COMMONDIR)/ColorConvNEON.cpp \
 					 $(GPUDIR)/Common/TextureDecoderNEON.cpp
-
-			SOURCES_C += $(NATIVEDIR)/ext/libpng17/arm/arm_init.c \
-				     $(NATIVEDIR)/ext/libpng17/arm/filter_neon_intrinsics.c
-			ASMFILES   += $(NATIVEDIR)/math/fast/fast_matrix_neon.S \
-				      $(NATIVEDIR)/ext/libpng17/arm/filter_neon.S
 		endif
    else
 	ifneq (,$(findstring msvc,$(platform)))
@@ -578,10 +582,6 @@ endif
 		SOURCES_C   += $(NATIVEDIR)/math/fast/fast_matrix_sse.c
    endif
 endif
-SOURCES_CXX += \
-   $(COMMONDIR)/ArmEmitter.cpp \
-   $(COMMONDIR)/Arm64Emitter.cpp \
-   $(COREDIR)/Util/DisArm64.cpp
 
 #UDIS86
 # Compiled and linked even on ARM for now
@@ -591,32 +591,6 @@ SOURCES_C += $(EXTDIR)/udis86/decode.c \
 			 $(EXTDIR)/udis86/syn-intel.c \
 			 $(EXTDIR)/udis86/syn.c \
 			 $(EXTDIR)/udis86/udis86.c
-
-
-SOURCES_CXX += \
-	$(COMMONDIR)/Vulkan/VulkanContext.cpp \
-	$(COMMONDIR)/Vulkan/VulkanDebug.cpp \
-	$(COMMONDIR)/Vulkan/VulkanImage.cpp \
-	$(COMMONDIR)/Vulkan/VulkanLoader.cpp \
-	$(COMMONDIR)/Vulkan/VulkanMemory.cpp \
-	$(NATIVEDIR)/thin3d/thin3d_vulkan.cpp \
-	$(NATIVEDIR)/thin3d/VulkanRenderManager.cpp \
-	$(NATIVEDIR)/thin3d/VulkanQueueRunner.cpp \
-	$(GPUDIR)/Vulkan/DepalettizeShaderVulkan.cpp \
-	$(GPUDIR)/Vulkan/DrawEngineVulkan.cpp \
-	$(GPUDIR)/Vulkan/FragmentShaderGeneratorVulkan.cpp \
-	$(GPUDIR)/Vulkan/FramebufferVulkan.cpp \
-	$(GPUDIR)/Vulkan/GPU_Vulkan.cpp \
-	$(GPUDIR)/Vulkan/PipelineManagerVulkan.cpp \
-	$(GPUDIR)/Vulkan/ShaderManagerVulkan.cpp \
-	$(GPUDIR)/Vulkan/StateMappingVulkan.cpp \
-	$(GPUDIR)/Vulkan/StencilBufferVulkan.cpp \
-	$(GPUDIR)/Vulkan/TextureCacheVulkan.cpp \
-	$(GPUDIR)/Vulkan/TextureScalerVulkan.cpp \
-	$(GPUDIR)/Vulkan/VertexShaderGeneratorVulkan.cpp \
-	$(GPUDIR)/Vulkan/VulkanUtil.cpp \
-	$(LIBRETRODIR)/LibretroVulkanContext.cpp \
-	$(LIBRETRODIR)/libretro_vulkan.cpp
 
 ifneq ($(PLATFORM_EXT), darwin)
 	ifeq ($(PLATFORM_EXT), unix)
