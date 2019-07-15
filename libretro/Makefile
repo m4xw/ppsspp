@@ -174,6 +174,22 @@ else ifneq (,$(findstring ios,$(platform)))
 	PLATFORM_EXT := unix
 	TARGET_ARCH = arm
 
+# Nintendo Switch
+else ifeq ($(platform), libnx)
+   include $(DEVKITPRO)/libnx/switch_rules
+   PIC = 1
+   TARGET := $(TARGET_NAME)_libretro_$(platform).a
+   CPUOPTS := -g -march=armv8-a -mtune=cortex-a57 -mtp=soft -mcpu=cortex-a57+crc+fp+simd
+   PLATCFLAGS = -D__aarch64__ -fPIE -I$(PORTLIBS)/include/ -I$(LIBNX)/include/ -ffunction-sections -fdata-sections -ftls-model=local-exec -DEGL
+   PLATCFLAGS += $(INCLUDE) -D__SWITCH__=1 -DMOBILE_DEVICE -DHAVE_LIBNX
+   FFMPEGINCFLAGS += -I$(PORTLIBS)/include
+   FFMPEGLIBDIR := -I$(PORTLIBS)/lib
+   CXXFLAGS += -fno-rtti
+   WITH_DYNAREC = 1
+   STATIC_LINKING = 1
+   HAVE_NEON = 1
+   TARGET_ARCH = arm64
+
 # Android
 else ifneq (,$(findstring android,$(platform)))
 	fpic = -fPIC
@@ -517,7 +533,7 @@ else
 	GLFLAGS += -DHAVE_OPENGL
 endif
 
-COREFLAGS += -D__LIBRETRO__ -DPPSSPP -DUSE_FFMPEG -DGLEW_STATIC -DGLEW_NO_GLU -DMINIUPNP_STATICLIB
+COREFLAGS += -D__LIBRETRO__ -DPPSSPP -DUSE_FFMPEG -DGLEW_STATIC -DGLEW_NO_GLU -DMINIUPNP_STATICLIB -fno-strict-aliasing -Wno-multichar -Wno-deprecated-register -fsigned-char -fomit-frame-pointer -Wno-attributes
 
 ifeq ($(DEBUG), 1)
 	ifneq (,$(findstring msvc,$(platform)))
@@ -532,13 +548,13 @@ else
 endif
 
 ifeq (,$(findstring msvc,$(platform)))
-   CXXFLAGS += -std=c++11
+   CXXFLAGS += -std=gnu++11
 endif
 
 ### Finalize ###
 OBJECTS		+= $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o) $(ASMFILES:.S=.o)
-CXXFLAGS    += $(CPUOPTS) $(COREFLAGS) $(FFMPEGINCFLAGS) $(INCFLAGS) $(INCFLAGS_PLATFORM) $(PLATCFLAGS) $(fpic) $(PLATCFLAGS) $(CPUFLAGS) $(GLFLAGS) $(DYNAFLAGS)
-CFLAGS		+= $(CPUOPTS) $(COREFLAGS) $(FFMPEGINCFLAGS) $(INCFLAGS) $(INCFLAGS_PLATFORM) $(PLATCFLAGS) $(fpic) $(PLATCFLAGS) $(CPUFLAGS) $(GLFLAGS) $(DYNAFLAGS)
+CXXFLAGS    += $(CPUOPTS) $(COREFLAGS) $(FFMPEGINCFLAGS) $(INCFLAGS) $(INCFLAGS_PLATFORM) $(PLATCFLAGS) $(fpic) $(CPUFLAGS) $(GLFLAGS) $(DYNAFLAGS)
+CFLAGS		+= $(CPUOPTS) $(COREFLAGS) $(FFMPEGINCFLAGS) $(INCFLAGS) $(INCFLAGS_PLATFORM) $(PLATCFLAGS) $(fpic) $(CPUFLAGS) $(GLFLAGS) $(DYNAFLAGS)
 
 LDFLAGS		+= $(FFMPEGLDFLAGS) $(fpic)
 ifeq (,$(findstring android,$(platform))$(findstring msvc,$(platform)))
@@ -574,7 +590,7 @@ all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
-	$(AR) rcs $A $(OBJECTS)
+	$(AR) rcs $@ $(OBJECTS)
 else
 	$(LD) $(LINKOUT)$@ $(OBJECTS) $(LDFLAGS) $(GL_LIB)
 endif
