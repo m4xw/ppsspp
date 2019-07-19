@@ -67,13 +67,17 @@ public:
 		// The protection will be set to RW if PlatformIsWXExclusive.
         
 #ifdef HAVE_LIBNX
-		if(R_FAILED(jitCreate(&jitController, size))) 
+		Result rc = jitCreate(&jitController, size);
+		if(R_FAILED(rc)) 
 		{
-			printf("Failed to create Jitbuffer of size %d\n", size);
+			printf("Failed to create Jitbuffer of size 0x%x err: 0x%x\n", size, rc);
 		}
-		printf("[NXJIT]: Initialized RX: %x RW: %x\n", jitController.rx_addr, jitController.rw_addr);
+		printf("[NXJIT]: Initialized RX: %p RW: %p\n", jitController.rx_addr, jitController.rw_addr);
+
 		region = (u8*)jitController.rx_addr;
-		activeJitController = &jitController;
+
+		if(!activeJitController)
+			activeJitController = &jitController;
 #else
 		region = (u8*)AllocateExecutableMemory(region_size);
 #endif
@@ -129,7 +133,9 @@ public:
 		ProtectMemoryPages(region, region_size, MEM_PROT_READ | MEM_PROT_WRITE);
 		FreeMemoryPages(region, region_size);
 #else
-		activeJitController = nullptr;
+        if(activeJitController == &jitController)
+		    activeJitController = nullptr;
+
 		jitClose(&jitController);
 		printf("[NXJIT]: Jit closed\n");
 #endif

@@ -36,7 +36,9 @@ static const std::string tmpfs_ram_temp_file = "/dev/shm/gc_mem.tmp";
 
 #ifdef HAVE_LIBNX
 #include <malloc.h> // memalign
-static intptr_t memoryBase = 0;
+static uintptr_t memoryBase = 0;
+static uintptr_t memoryCodeBase = 0;
+static uintptr_t memorySrcBase = 0;
 #endif
 
 // do not make this "static"
@@ -87,14 +89,32 @@ void MemArena::ReleaseSpace() {
 #ifndef HAVE_LIBNX
 	close(fd);
 #else
-    free((void*)memoryBase);
-    memoryBase = 0;
+	if(R_FAILED(svcUnmapProcessCodeMemory(envGetOwnProcessHandle(), (u64)memoryCodeBase, (u64)memorySrcBase, 0x10000000)))
+        printf("Failed to release view space...\n");
+
+    free((void*)memorySrcBase);
+	memorySrcBase = 0;
+
+    /*
+	virtmemFree((void*)memoryBase, 0x10000000);
+	memoryBase = 0;
+	virtmemFree((void*)memoryCodeBase, 0x10000000);
+	memoryCodeBase = 0;
+	*/
 #endif
 }
 
 void *MemArena::CreateView(s64 offset, size_t size, void *base)
 {
 #ifdef HAVE_LIBNX
+	Result rc = svcMapProcessMemory(base, envGetOwnProcessHandle(), (u64)(memoryCodeBase + offset), size);
+	if(R_FAILED(rc))
+	{
+		printf("Fatal error creating the view... base: %p offset: 0x%x size: 0x%x src: %p err: 0x%x\n", base, offset, size, memoryCodeBase + offset, rc);
+	} else {
+		printf("Created the view... base: %p offset: 0x%x size: 0x%x src: %p err: 0x%x\n", base, offset, size, memoryCodeBase + offset, rc);
+	}
+
     return base;
 #else
 	void *retval = mmap(base, size, PROT_READ | PROT_WRITE, MAP_SHARED |
@@ -112,9 +132,12 @@ void *MemArena::CreateView(s64 offset, size_t size, void *base)
 #endif
 }
 
-void MemArena::ReleaseView(void* view, size_t size) {
+void MemArena::ReleaseView(s64 offset, void* view, size_t size) {
 #ifndef HAVE_LIBNX
 	munmap(view, size);
+#else
+	if(R_FAILED(svcUnmapProcessMemory(view, envGetOwnProcessHandle(), (u64)(memoryCodeBase + offset), size)))
+        printf("Failed to unmap View...\n");
 #endif // HAVE_LIBNX
 }
 
@@ -123,31 +146,20 @@ u8* MemArena::Find4GBBase() {
 #if PPSSPP_ARCH(64BIT) && !defined(USE_ADDRESS_SANITIZER)
 	// Very precarious - mmap cannot return an error when trying to map already used pages.
 	// This makes the Windows approach above unusable on Linux, so we will simply pray...
-#ifdef HAVE_LIBNX
-	// We want a extra big buffer, since masking is causing troubles
-	memoryBase = (intptr_t)memalign(0x1000, 0x10000000);
+	memorySrcBase = (uintptr_t)memalign(0x1000, 0x10000000);
+
+	if(!memoryBase)
+		memoryBase = (uintptr_t)virtmemReserve(0x10000000);
+	
+	if(!memoryCodeBase)
+		memoryCodeBase = (uintptr_t)virtmemReserve(0x10000000);
+
+	if(R_FAILED(svcMapProcessCodeMemory(envGetOwnProcessHandle(), (u64) memoryCodeBase, (u64) memorySrcBase, 0x10000000)))
+		printf("Failed to Map memory...\n");
+	if(R_FAILED(svcSetProcessMemoryPermission(envGetOwnProcessHandle(), memoryCodeBase, 0x10000000, Perm_Rx)))
+		printf("Failed to set perms...\n");
+
 	return (u8*)memoryBase;
-#else
-	// We should probably just go look in /proc/self/maps for some free space.
-	// But let's try the anonymous mmap trick, just like on 32-bit, but bigger and
-	// aligned to 4GB for the movk trick. We can ensure that we get an aligned 4GB
-	// address by grabbing 8GB and aligning the pointer.
-	const uint64_t EIGHT_GIGS = 0x200000000ULL;
-	void *base = mmap(0, EIGHT_GIGS, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
-	if (base) {
-		INFO_LOG(MEMMAP, "base: %p", base);
-		uint64_t aligned_base = ((uint64_t)base + 0xFFFFFFFF) & ~0xFFFFFFFFULL;
-		INFO_LOG(MEMMAP, "aligned_base: %p", (void *)aligned_base);
-		munmap(base, EIGHT_GIGS);
-		return reinterpret_cast<u8 *>(aligned_base);
-	} else {
-		u8 *hardcoded_ptr = reinterpret_cast<u8*>(0x2300000000ULL);
-		INFO_LOG(MEMMAP, "Failed to anonymously map 8GB. Fall back to the hardcoded pointer %p.", hardcoded_ptr);
-		// Just grab some random 4GB...
-		// This has been known to fail lately though, see issue #12249.
-		return hardcoded_ptr;
-	}
-#endif // HAVE_LIBNX
 #else
 	size_t size = 0x10000000;
 	void* base = mmap(0, size, PROT_READ | PROT_WRITE,
