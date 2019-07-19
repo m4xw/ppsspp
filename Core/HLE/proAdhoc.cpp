@@ -2127,7 +2127,6 @@ int getPTPSocketCount() {
 }
 
 int initNetwork(SceNetAdhocctlAdhocId *adhoc_id){
-#ifndef HAVE_LIBNX // Disable networking for libnx, will need more work
 	auto n = GetI18NCategory("Networking");
 	int iResult = 0;
 	metasocket = (int)INVALID_SOCKET;
@@ -2141,6 +2140,44 @@ int initNetwork(SceNetAdhocctlAdhocId *adhoc_id){
 	setSockNoDelay(metasocket, 1);
 	// Switch to Nonblocking Behaviour
 	changeBlockingMode(metasocket, 1);
+
+	struct sockaddr_in server_addr;
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(SERVER_PORT); //27312 // Maybe read this from config too
+
+	// Resolve dns
+	addrinfo * resultAddr;
+	addrinfo * ptr;
+	in_addr serverIp;
+	serverIp.s_addr = INADDR_ANY;
+
+	addrinfo hints = {0};
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = /*AI_V4MAPPED |*/ AI_ADDRCONFIG;
+	hints.ai_protocol = 0;
+	hints.ai_family = AF_INET;
+
+	iResult = getaddrinfo(g_Config.proAdhocServer.c_str(),"27312",&hints,&resultAddr);
+	if (iResult == EAI_AGAIN) {
+		// Temporary failure.  Since this already blocks, let's just try once more.
+		sleep_ms(1);
+		iResult = getaddrinfo(g_Config.proAdhocServer.c_str(),"27312",&hints,&resultAddr);
+	}
+
+	if (iResult != 0) {
+		ERROR_LOG(SCENET, "DNS Error (%s)\n", g_Config.proAdhocServer.c_str());
+		host->NotifyUserMessage(n->T("DNS Error connecting to ") + g_Config.proAdhocServer, 2.0f, 0x0000ff);
+		return iResult;
+	}
+	for (ptr = resultAddr; ptr != NULL; ptr = ptr->ai_next) {
+		switch (ptr->ai_family) {
+		case AF_INET:
+			serverIp = ((sockaddr_in *)ptr->ai_addr)->sin_addr;
+			break;
+		}
+	}
+
+	freeaddrinfo(resultAddr);
 
 	// If Server is at localhost Try to Bind socket to specific adapter before connecting to prevent 2nd instance being recognized as already existing 127.0.0.1 by AdhocServer
 	// (may not works in WinXP/2003 for IPv4 due to "Weak End System" model)
@@ -2222,9 +2259,6 @@ int initNetwork(SceNetAdhocctlAdhocId *adhoc_id){
 	else{
 		return SOCKET_ERROR;
 	}
-#else
-	return -1;
-#endif // HAVE_LIBNX
 }
 
 bool isZeroMAC(const SceNetEtherAddr* addr) {

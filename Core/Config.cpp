@@ -669,7 +669,10 @@ bool Config::IsBackendEnabled(GPUBackend backend, bool validate) {
 			return false;
 	}
 
-#if PPSSPP_PLATFORM(UWP)
+#if PPSSPP_PLATFORM(IOS) || defined(HAVE_LIBNX)
+	if (backend != GPUBackend::OPENGL)
+		return false;
+#elif PPSSPP_PLATFORM(UWP)
 	if (backend != GPUBackend::DIRECT3D11)
 		return false;
 #elif PPSSPP_PLATFORM(WINDOWS)
@@ -686,11 +689,12 @@ bool Config::IsBackendEnabled(GPUBackend backend, bool validate) {
 	if (backend == GPUBackend::OPENGL)
 		return false;
 #endif
+#if !defined(HAVE_LIBNX)
 	if (validate) {
 		if (backend == GPUBackend::VULKAN && !VulkanMayBeAvailable())
 			return false;
 	}
-
+#endif
 	return true;
 }
 
@@ -990,7 +994,7 @@ static ConfigSetting networkSettings[] = {
 
 static int DefaultPSPModel() {
 	// TODO: Can probably default this on, but not sure about its memory differences.
-#if !PPSSPP_ARCH(AMD64) && !defined(_WIN32)
+#if !PPSSPP_ARCH(AMD64) && !defined(_WIN32) && !defined(HAVE_LIBNX)
 	return PSP_MODEL_FAT;
 #else
 	return PSP_MODEL_SLIM;
@@ -1298,7 +1302,7 @@ void Config::Load(const char *iniFileName, const char *controllerIniFilename) {
 	// Sometimes the download may not be finished when the main screen shows (if the user dismisses the
 	// splash screen quickly), but then we'll just show the notification next time instead, we store the
 	// upgrade number in the ini.
-	if (iRunCount % 10 == 0 && bCheckForNewVersion) {
+	if (false && iRunCount % 10 == 0 && bCheckForNewVersion) {
 		std::shared_ptr<http::Download> dl = g_DownloadManager.StartDownloadWithCallback(
 			"http://www.ppsspp.org/version.json", "", &DownloadCompletedCallback);
 		dl->SetHidden(true);

@@ -542,6 +542,8 @@ UI::EventReturn GameBrowser::StorageClick(UI::EventParams &e) {
 UI::EventReturn GameBrowser::HomeClick(UI::EventParams &e) {
 #if PPSSPP_PLATFORM(ANDROID) || PPSSPP_PLATFORM(SWITCH) || defined(USING_WIN_UI) || PPSSPP_PLATFORM(UWP)
 	SetPath(g_Config.memStickDirectory);
+#elif HAVE_LIBNX
+	SetPath(g_Config.memStickDirectory);
 #else
 	SetPath(getenv("HOME"));
 #endif
@@ -1170,6 +1172,8 @@ UI::EventReturn MainScreen::OnDownloadUpgrade(UI::EventParams &e) {
 	}
 #elif PPSSPP_PLATFORM(WINDOWS)
 	LaunchBrowser("https://www.ppsspp.org/downloads.html");
+#elif defined(HAVE_LIBNX)
+	// TODO
 #else
 	// Go directly to ppsspp.org and let the user sort it out
 	// (for details and in case downloads doesn't have their platform.)
