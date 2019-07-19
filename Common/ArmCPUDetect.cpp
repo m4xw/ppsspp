@@ -249,6 +249,9 @@ void CPUInfo::Detect()
 	SYSTEM_INFO sysInfo;
 	GetSystemInfo(&sysInfo);
 	num_cores = sysInfo.dwNumberOfProcessors;
+#elif defined(HAVE_LIBNX)
+	strcpy(brand_string, "Tegra X1");
+    num_cores = 3; // 4th core is reserved
 #else // !PPSSPP_PLATFORM(IOS)
 	strcpy(brand_string, "Unknown");
 	num_cores = 1;

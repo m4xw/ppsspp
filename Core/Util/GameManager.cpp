@@ -112,6 +112,14 @@ bool GameManager::Uninstall(std::string name) {
 }
 
 void GameManager::Update() {
+#ifdef HAVE_LIBNX
+	if (installThread_.get() != 0 && !installInProgress_) {
+        installThread_->join();
+        INFO_LOG(HLE, "Joined Install thread!");
+        installThread_.reset();
+    }
+#endif // HAVE_LIBNX
+
 	if (curDownload_.get() && curDownload_->Done()) {
 		INFO_LOG(HLE, "Download completed! Status = %d", curDownload_->ResultCode());
 		std::string fileName = curDownload_->outfile();
@@ -244,10 +252,12 @@ ZipFileContents DetectZipFileContents(struct zip *z, ZipFileInfo *info) {
 }
 
 bool GameManager::InstallGame(const std::string &url, const std::string &fileName, bool deleteAfter) {
+#ifndef HAVE_LIBNX // Some hackery, needs new var
 	if (installInProgress_) {
 		ERROR_LOG(HLE, "Cannot have two installs in progress at the same time");
 		return false;
 	}
+#endif
 
 	if (!File::Exists(fileName)) {
 		ERROR_LOG(HLE, "Game file '%s' doesn't exist", fileName.c_str());
@@ -618,6 +628,9 @@ bool GameManager::InstallGameOnThread(std::string url, std::string fileName, boo
 	if (installInProgress_) {
 		return false;
 	}
+#ifdef HAVE_LIBNX
+	installInProgress_ = true; // Some trickery
+#endif // HAVE_LIBNX
 	installThread_.reset(new std::thread(std::bind(&GameManager::InstallGame, this, url, fileName, deleteAfter)));
 	return true;
 }

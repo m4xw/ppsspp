@@ -48,10 +48,13 @@ typedef signed __int64 s64;
 // Some HID conflicts
 #define KEY_UP PKEY_UP
 #define KEY_DOWN PKEY_DOWN
+// Other conflicts
+#define Event _Event
 #include <switch.h>
 // Cleanup
 #undef KEY_UP
 #undef KEY_DOWN
+#undef Event
 
 // Conflicting types with libnx
 #ifndef _u64

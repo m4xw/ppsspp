@@ -345,10 +345,12 @@ zip_close(struct zip *za)
 	}
 	return -1;
     }
+
+#ifndef HAVE_LIBNX
     mask = umask(0);
     umask(mask);
     chmod(za->zn, 0666&~mask);
-
+#endif // HAVE_LIBNX
     _zip_free(za);
     free(temp);
     

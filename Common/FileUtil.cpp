@@ -313,7 +313,8 @@ std::string ResolvePath(const std::string &path) {
 		output = output.substr(4);
 	delete [] buf;
 	return output;
-
+#elif HAVE_LIBNX
+	return path;
 #else
 	std::unique_ptr<char[]> buf(new char[PATH_MAX + 32768]);
 	if (realpath(path.c_str(), buf.get()) == nullptr)

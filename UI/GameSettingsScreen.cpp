@@ -1149,8 +1149,10 @@ void GameSettingsScreen::onFinish(DialogResult result) {
 			Audio_Init();
 	}
 
+#ifndef HAVE_LIBNX
 	Reporting::Enable(enableReports_, "report.ppsspp.org");
 	Reporting::UpdateConfig();
+#endif // HAVE_LIBNX
 	g_Config.Save("GameSettingsScreen::onFinish");
 	if (editThenRestore_) {
 		// In case we didn't have the title yet before, try again.
@@ -1164,8 +1166,10 @@ void GameSettingsScreen::onFinish(DialogResult result) {
 	KeyMap::UpdateNativeMenuKeys();
 
 	// Wipe some caches after potentially changing settings.
+#ifndef HAVE_LIBNX
 	NativeMessageReceived("gpu_resized", "");
 	NativeMessageReceived("gpu_clearCache", "");
+#endif // HAVE_LIBNX
 }
 
 #if PPSSPP_PLATFORM(ANDROID)

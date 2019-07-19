@@ -3,7 +3,7 @@
 #ifdef IOS
 #include <OpenGLES/ES3/gl.h>
 #include <OpenGLES/ES3/glext.h>
-#elif defined(USING_GLES2)
+#elif defined(USING_GLES2) && !defined(HAVE_LIBNX)
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 // At least Nokia platforms need the three below
@@ -20,14 +20,23 @@ typedef char GLchar;
 #include <OpenGL/gl.h>
 #else
 
-#ifndef __LIBRETRO__
+#if !defined(__LIBRETRO__) && !defined(HAVE_LIBNX)
 #include <GL/gl.h>
 #else
+
+#define GL_SRC1_COLOR_EXT 0x88F9
+#define GL_SRC1_ALPHA_EXT 0x8589
+#define GL_ONE_MINUS_SRC1_COLOR_EXT 0x88FA
+#define GL_ONE_MINUS_SRC1_ALPHA_EXT 0x88FB
+#define GL_SRC_ALPHA_SATURATE_EXT 0x0308
+#define GL_LOCATION_INDEX_EXT 0x930F
+#define GL_MAX_DUAL_SOURCE_DRAW_BUFFERS_EXT 0x88FC
 
 #include <GL/glcorearb.h>
 #include <EGL/egl.h>
 //#include <EGL/eglext.h>
 
+extern PFNGLBINDFRAGDATALOCATIONINDEXEDEXTPROC __glBindFragDataLocationIndexedEXT;
 extern RGLSYMGLACCUMPROC __glAccum;
 extern RGLSYMGLACCUMXOESPROC __glAccumxOES;
 extern RGLSYMGLACTIVESHADERPROGRAMPROC __glActiveShaderProgram;
@@ -1392,7 +1401,16 @@ extern RGLSYMGLWINDOWPOS3SPROC __glWindowPos3s;
 extern RGLSYMGLWINDOWPOS3SVARBPROC __glWindowPos3svARB;
 extern RGLSYMGLWINDOWPOS3SVPROC __glWindowPos3sv;
 extern RGLSYMGETTEXTURESUBIMAGEPROC __glGetTextureSubImage;
+extern PFNGLCOPYIMAGESUBDATAOES __glCopyImageSubDataOES;
 
+#ifdef glCopyImageSubDataOES
+#undef glCopyImageSubDataOES
+#endif // glCopyImageSubDataOES
+#define glCopyImageSubDataOES __glCopyImageSubDataOES
+#ifdef glBindFragDataLocationIndexedEXT
+#undef glBindFragDataLocationIndexedEXT
+#endif // glBindFragDataLocationIndexedEXT
+#define glBindFragDataLocationIndexedEXT __glBindFragDataLocationIndexedEXT
 #ifdef glGetTextureSubImage
 #undef glGetTextureSubImage
 #endif // glGetTextureSubImage
@@ -6868,9 +6886,11 @@ extern RGLSYMGETTEXTURESUBIMAGEPROC __glGetTextureSubImage;
 #endif
 
 #ifdef USING_GLES2
+#ifndef HAVE_LIBNX
 // Support OpenGL ES 3.0
 // This uses the "DYNAMIC" approach from the gles3jni NDK sample.
 #include "../gfx_es2/gl3stub.h"
+#endif // HAVE_LIBNX
 #endif
 
 
