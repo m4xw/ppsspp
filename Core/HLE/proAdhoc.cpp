@@ -2127,6 +2127,7 @@ int getPTPSocketCount() {
 }
 
 int initNetwork(SceNetAdhocctlAdhocId *adhoc_id){
+#ifndef HAVE_LIBNX // Disable networking for libnx, will need more work
 	auto n = GetI18NCategory("Networking");
 	int iResult = 0;
 	metasocket = (int)INVALID_SOCKET;
@@ -2221,6 +2222,9 @@ int initNetwork(SceNetAdhocctlAdhocId *adhoc_id){
 	else{
 		return SOCKET_ERROR;
 	}
+#else
+	return -1;
+#endif // HAVE_LIBNX
 }
 
 bool isZeroMAC(const SceNetEtherAddr* addr) {

@@ -3932,7 +3932,16 @@ void ARM64CodeBlock::PoisonMemory(int offset) {
 	// Less than optimal, but there would be nothing we could do but throw a runtime warning anyway.
 	// AArch64: 0xD4200000 = BRK 0
 	while (ptr < maxptr)
+	{
+#ifdef HAVE_LIBNX
+		if(activeJitController)
+		{
+			*(u32*)((intptr_t)ptr++ - (intptr_t)activeJitController->rx_addr + (intptr_t)activeJitController->rw_addr) = 0xD4200000;
+		}
+#else
 		*ptr++ = 0xD4200000;
+#endif
+	}
 }
 
 }  // namespace

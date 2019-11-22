@@ -10,6 +10,13 @@
 #include "Common/Log.h"
 #include "Common/MemoryUtil.h"
 
+#ifdef HAVE_LIBNX
+#include <switch.h>
+// This is a bit of a whacky solution, however this is the simplest implementation for it
+// given the restrictions in Horizon
+extern Jit* activeJitController;
+#endif // HAVE_LIBNX
+
 // Everything that needs to generate code should inherit from this.
 // You get memory management for free, plus, you can use all emitter functions without
 // having to prefix them with gen-> or something similar.
@@ -63,8 +70,19 @@ public:
 	void AllocCodeSpace(int size) {
 		region_size = size;
 		// The protection will be set to RW if PlatformIsWXExclusive.
-		region = (u8 *)AllocateExecutableMemory(region_size);
+#ifdef HAVE_LIBNX
+		if(R_FAILED(jitCreate(&jitController, size))) 
+		{
+			printf("Failed to create Jitbuffer of size %d\n", size);
+		}
+		printf("[NXJIT]: Initialized RX: %x RW: %x\n", jitController.rx_addr, jitController.rw_addr);
+		region = (u8*)jitController.rx_addr;
+		writableRegion = (u8*)jitController.rw_addr;
+		activeJitController = &jitController;
+#else
+		region = (u8*)AllocateExecutableMemory(region_size);
 		writableRegion = region;
+#endif
 		T::SetCodePointer(region, writableRegion);
 	}
 
@@ -110,15 +128,21 @@ public:
 
 	// Call this when shutting down. Don't rely on the destructor, even though it'll do the job.
 	void FreeCodeSpace() {
+#ifndef HAVE_LIBNX
 		ProtectMemoryPages(region, region_size, MEM_PROT_READ | MEM_PROT_WRITE);
 		FreeMemoryPages(region, region_size);
+#else
+		activeJitController = nullptr;
+		jitClose(&jitController);
+		printf("[NXJIT]: Jit closed\n");
+#endif
 		region = nullptr;
 		writableRegion = nullptr;
 		region_size = 0;
 	}
 
 	const u8 *GetCodePtr() const override {
-		return T::GetCodePointer();
+			return T::GetCodePointer();
 	}
 
 	void ResetCodePtr(size_t offset) {
@@ -151,4 +175,3 @@ private:
 	const uint8_t *writeStart_ = nullptr;
 	uint8_t *writableRegion = nullptr;
 };
-

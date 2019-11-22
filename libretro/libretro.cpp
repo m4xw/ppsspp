@@ -195,10 +195,15 @@ template <typename T> class RetroOption
       std::vector<std::pair<std::string, T>> list_;
 };
 
-static RetroOption<CPUCore> ppsspp_cpu_core("ppsspp_cpu_core", "CPU Core", { { "jit", CPUCore::JIT }, { "IR jit", CPUCore::IR_JIT }, { "interpreter", CPUCore::INTERPRETER } });
+static RetroOption<CPUCore> ppsspp_cpu_core("ppsspp_cpu_core", "CPU Core", { { "jit", CPUCore::JIT }, { "IR Interpreter", CPUCore::IR_JIT }, { "Interpreter", CPUCore::INTERPRETER } });
 static RetroOption<int> ppsspp_locked_cpu_speed("ppsspp_locked_cpu_speed", "Locked CPU Speed", { { "off", 0 }, { "222MHz", 222 }, { "266MHz", 266 }, { "333MHz", 333 } });
+static RetroOption<bool> ppsspp_vertexjit("ppsspp_vertexjit", "JIT Vertex Decoding (JIT only)", true);
 static RetroOption<int> ppsspp_language("ppsspp_language", "Language", { { "automatic", -1 }, { "english", PSP_SYSTEMPARAM_LANGUAGE_ENGLISH }, { "japanese", PSP_SYSTEMPARAM_LANGUAGE_JAPANESE }, { "french", PSP_SYSTEMPARAM_LANGUAGE_FRENCH }, { "spanish", PSP_SYSTEMPARAM_LANGUAGE_SPANISH }, { "german", PSP_SYSTEMPARAM_LANGUAGE_GERMAN }, { "italian", PSP_SYSTEMPARAM_LANGUAGE_ITALIAN }, { "dutch", PSP_SYSTEMPARAM_LANGUAGE_DUTCH }, { "portuguese", PSP_SYSTEMPARAM_LANGUAGE_PORTUGUESE }, { "russian", PSP_SYSTEMPARAM_LANGUAGE_RUSSIAN }, { "korean", PSP_SYSTEMPARAM_LANGUAGE_KOREAN }, { "chinese_traditional", PSP_SYSTEMPARAM_LANGUAGE_CHINESE_TRADITIONAL }, { "chinese_simplified", PSP_SYSTEMPARAM_LANGUAGE_CHINESE_SIMPLIFIED } });
+#ifdef HAVE_LIBNX
+static RetroOption<int> ppsspp_rendering_mode("ppsspp_rendering_mode", "Rendering Mode", { { "buffered", FB_BUFFERED_MODE } });
+#else
 static RetroOption<int> ppsspp_rendering_mode("ppsspp_rendering_mode", "Rendering Mode", { { "buffered", FB_BUFFERED_MODE }, { "nonbuffered", FB_NON_BUFFERED_MODE } });
+#endif
 static RetroOption<bool> ppsspp_auto_frameskip("ppsspp_auto_frameskip", "Auto Frameskip", false);
 static RetroOption<int> ppsspp_frameskip("ppsspp_frameskip", "Frameskip", 0, 10);
 static RetroOption<int> ppsspp_frameskiptype("ppsspp_frameskiptype", "Frameskip Type", 0, 10);
@@ -206,13 +211,14 @@ static RetroOption<int> ppsspp_internal_resolution("ppsspp_internal_resolution",
 static RetroOption<int> ppsspp_button_preference("ppsspp_button_preference", "Confirmation Button", { { "cross", PSP_SYSTEMPARAM_BUTTON_CROSS }, { "circle", PSP_SYSTEMPARAM_BUTTON_CIRCLE } });
 static RetroOption<bool> ppsspp_fast_memory("ppsspp_fast_memory", "Fast Memory (Speedhack)", true);
 static RetroOption<bool> ppsspp_block_transfer_gpu("ppsspp_block_transfer_gpu", "Block Transfer GPU", true);
-static RetroOption<int> ppsspp_texture_scaling_level("ppsspp_texture_scaling_level", "Texture Scaling Level", { { "1", 1 }, { "2", 2 }, { "3", 3 }, { "4", 4 }, { "5", 5 }, { "0", 0 } });
+static RetroOption<int> ppsspp_texture_scaling_level("ppsspp_texture_scaling_level", "Texture Scaling Level", { { "0", 0 }, { "1", 1 }, { "2", 2 }, { "3", 3 }, { "4", 4 }, { "5", 5 } });
 static RetroOption<int> ppsspp_texture_scaling_type("ppsspp_texture_scaling_type", "Texture Scaling Type", { { "xbrz", TextureScalerCommon::XBRZ }, { "hybrid", TextureScalerCommon::HYBRID }, { "bicubic", TextureScalerCommon::BICUBIC }, { "hybrid_bicubic", TextureScalerCommon::HYBRID_BICUBIC } });
 static RetroOption<int> ppsspp_texture_filtering("ppsspp_texture_filtering", "Texture Filtering", { { "auto", 1 }, { "nearest", 2 }, { "linear", 3 }, { "linear(FMV)", 4 } });
 static RetroOption<int> ppsspp_texture_anisotropic_filtering("ppsspp_texture_anisotropic_filtering", "Anisotropic Filtering", { "off", "1x", "2x", "4x", "8x", "16x" });
 static RetroOption<int> ppsspp_lower_resolution_for_effects("ppsspp_lower_resolution_for_effects", "Lower resolution for effects", { "off", "safe", "balanced", "aggressive" });
 static RetroOption<bool> ppsspp_texture_deposterize("ppsspp_texture_deposterize", "Texture Deposterize", false);
 static RetroOption<bool> ppsspp_texture_replacement("ppsspp_texture_replacement", "Texture Replacement", false);
+static RetroOption<bool> ppsspp_disable_slow_framebuffer_effects("ppsspp_disable_slow_framebuffer_effects", "Disable slower effects (Speedhack)", false);
 static RetroOption<bool> ppsspp_gpu_hardware_transform("ppsspp_gpu_hardware_transform", "GPU Hardware T&L", true);
 static RetroOption<bool> ppsspp_vertex_cache("ppsspp_vertex_cache", "Vertex Cache (Speedhack)", true);
 static RetroOption<bool> ppsspp_cheats("ppsspp_cheats", "Internal Cheats Support", false);
@@ -222,30 +228,32 @@ static RetroOption<bool> ppsspp_frame_duplication("ppsspp_frame_duplication", "D
 void retro_set_environment(retro_environment_t cb)
 {
    std::vector<retro_variable> vars;
-   vars.push_back(ppsspp_cpu_core.GetOptions());
-   vars.push_back(ppsspp_locked_cpu_speed.GetOptions());
-   vars.push_back(ppsspp_language.GetOptions());
-   vars.push_back(ppsspp_rendering_mode.GetOptions());
-   vars.push_back(ppsspp_auto_frameskip.GetOptions());
-   vars.push_back(ppsspp_frameskip.GetOptions());
-   vars.push_back(ppsspp_frameskiptype.GetOptions());
-   vars.push_back(ppsspp_internal_resolution.GetOptions());
-   vars.push_back(ppsspp_button_preference.GetOptions());
-   vars.push_back(ppsspp_fast_memory.GetOptions());
-   vars.push_back(ppsspp_block_transfer_gpu.GetOptions());
-   vars.push_back(ppsspp_texture_scaling_level.GetOptions());
-   vars.push_back(ppsspp_texture_scaling_type.GetOptions());
-   vars.push_back(ppsspp_texture_filtering.GetOptions());
-   vars.push_back(ppsspp_texture_anisotropic_filtering.GetOptions());
-   vars.push_back(ppsspp_texture_deposterize.GetOptions());
-   vars.push_back(ppsspp_texture_replacement.GetOptions());
-   vars.push_back(ppsspp_gpu_hardware_transform.GetOptions());
-   vars.push_back(ppsspp_vertex_cache.GetOptions());
-   vars.push_back(ppsspp_cheats.GetOptions());
-   vars.push_back(ppsspp_io_timing_method.GetOptions());
+	vars.push_back(ppsspp_cpu_core.GetOptions());
+	vars.push_back(ppsspp_vertexjit.GetOptions());
+	vars.push_back(ppsspp_locked_cpu_speed.GetOptions());
+	vars.push_back(ppsspp_language.GetOptions());
+	vars.push_back(ppsspp_rendering_mode.GetOptions());
+	vars.push_back(ppsspp_auto_frameskip.GetOptions());
+	vars.push_back(ppsspp_frameskip.GetOptions());
+	vars.push_back(ppsspp_frameskiptype.GetOptions());
+	vars.push_back(ppsspp_internal_resolution.GetOptions());
+	vars.push_back(ppsspp_button_preference.GetOptions());
+	vars.push_back(ppsspp_fast_memory.GetOptions());
+	vars.push_back(ppsspp_block_transfer_gpu.GetOptions());
+	vars.push_back(ppsspp_texture_scaling_level.GetOptions());
+	vars.push_back(ppsspp_texture_scaling_type.GetOptions());
+	vars.push_back(ppsspp_texture_filtering.GetOptions());
+	vars.push_back(ppsspp_texture_anisotropic_filtering.GetOptions());
+	vars.push_back(ppsspp_texture_deposterize.GetOptions());
+	vars.push_back(ppsspp_texture_replacement.GetOptions());
+	vars.push_back(ppsspp_disable_slow_framebuffer_effects.GetOptions());
+	vars.push_back(ppsspp_gpu_hardware_transform.GetOptions());
+	vars.push_back(ppsspp_vertex_cache.GetOptions());
+	vars.push_back(ppsspp_cheats.GetOptions());
+	vars.push_back(ppsspp_io_timing_method.GetOptions());
    vars.push_back(ppsspp_lower_resolution_for_effects.GetOptions());
    vars.push_back(ppsspp_frame_duplication.GetOptions());
-   vars.push_back({});
+	vars.push_back({});
 
    environ_cb = cb;
 
@@ -314,6 +322,7 @@ static void check_variables(CoreParameter &coreParam)
    ppsspp_rendering_mode.Update(&g_Config.iRenderingMode);
    ppsspp_cpu_core.Update((CPUCore *)&g_Config.iCpuCore);
    ppsspp_io_timing_method.Update((IOTimingMethods *)&g_Config.iIOTimingMethod);
+	ppsspp_vertexjit.Update(&g_Config.bVertexDecoderJit);
    ppsspp_lower_resolution_for_effects.Update(&g_Config.iBloomHack);
    ppsspp_frame_duplication.Update(&g_Config.bRenderDuplicateFrames);
 
@@ -381,7 +390,7 @@ void retro_init(void)
       logman->ChangeFileLog(nullptr);
       logman->AddListener(printfLogger);
 #if 1
-      logman->SetAllLogLevels(LogTypes::LINFO);
+		logman->SetAllLogLevels(LogTypes::LNOTICE);
 #endif
    }
 
@@ -527,112 +536,110 @@ namespace Libretro
 
 } // namespace Libretro
 
-bool retro_load_game(const struct retro_game_info *game)
-{
-   static std::string retro_base_dir;
-   static std::string retro_save_dir;
-   std::string error_string;
-   enum retro_pixel_format fmt          = RETRO_PIXEL_FORMAT_XRGB8888;
-   const char *nickname                 = NULL;
-   const char *dir_ptr                  = NULL;
-   struct retro_input_descriptor desc[] = {
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "Cross" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "Circle" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X, "Triangle" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y, "Square" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L, "L" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R, "R" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
-      { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Right Analog X" },
-      { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Right Analog Y" },
-      { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Left Analog X" },
-      { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Left Analog Y" },
-      { 0 },
-   };
+bool retro_load_game(const struct retro_game_info *game) {
+	struct retro_input_descriptor desc[] = {
+		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left" },
+		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up" },
+		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down" },
+		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
+		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "Cross" },
+		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "Circle" },
+		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X, "Triangle" },
+		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y, "Square" },
+		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L, "L" },
+		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R, "R" },
+		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
+		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
+		{ 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Right Analog X" },
+		{ 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Right Analog Y" },
+		{ 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Left Analog X" },
+		{ 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Left Analog Y" },
+		{ 0 },
+	};
+	environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
-   environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
+	enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
+	if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt)) {
+		ERROR_LOG(SYSTEM, "XRGB8888 is not supported.\n");
+		return false;
+	}
 
-   if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
-   {
-      ERROR_LOG(SYSTEM, "XRGB8888 is not supported.\n");
-      return false;
-   }
+	const char *nickname = NULL;
+	if (environ_cb(RETRO_ENVIRONMENT_GET_USERNAME, &nickname) && nickname) {
+		g_Config.sNickName = std::string(nickname);
+	}
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_USERNAME, &nickname) && nickname)
-      g_Config.sNickName = std::string(nickname);
+	const char *dir_ptr = NULL;
+	static std::string retro_base_dir;
+	static std::string retro_save_dir;
 
+	if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir_ptr) && dir_ptr) {
+		retro_base_dir = dir_ptr;
+		// Make sure that we don't have any lingering slashes, etc, as they break Windows.
+		size_t last = retro_base_dir.find_last_not_of(DIR_SEP_CHRS);
+		if (last != std::string::npos)
+			last++;
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir_ptr) 
-         && dir_ptr)
-   {
-      size_t last;
-      retro_base_dir = dir_ptr;
-      // Make sure that we don't have any lingering slashes, etc, as they break Windows.
-      last = retro_base_dir.find_last_not_of(DIR_SEP_CHRS);
-      if (last != std::string::npos)
-         last++;
+		retro_base_dir = retro_base_dir.substr(0, last) + DIR_SEP;
+	}
 
-      retro_base_dir = retro_base_dir.substr(0, last) + DIR_SEP;
-   }
+	if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir_ptr) && dir_ptr) {
+		retro_save_dir = dir_ptr;
+		// Make sure that we don't have any lingering slashes, etc, as they break Windows.
+		size_t last = retro_save_dir.find_last_not_of(DIR_SEP_CHRS);
+		if (last != std::string::npos)
+			last++;
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir_ptr) 
-         && dir_ptr)
-   {
-      retro_save_dir = dir_ptr;
-      // Make sure that we don't have any lingering slashes, etc, as they break Windows.
-      size_t last = retro_save_dir.find_last_not_of(DIR_SEP_CHRS);
-      if (last != std::string::npos)
-         last++;
+		retro_save_dir = retro_save_dir.substr(0, last) + DIR_SEP;
+	}
 
-      retro_save_dir = retro_save_dir.substr(0, last) + DIR_SEP;
-   }
+	if (retro_base_dir.empty()) {
+		retro_base_dir = File::GetDir(game->path);
+	}
 
-   if (retro_base_dir.empty())
-      retro_base_dir = File::GetDir(game->path);
+	retro_base_dir += "PPSSPP" DIR_SEP;
 
-   retro_base_dir            += "PPSSPP" DIR_SEP;
+	if (retro_save_dir.empty()) {
+		retro_save_dir = File::GetDir(game->path);
+	}
 
-   if (retro_save_dir.empty())
-      retro_save_dir = File::GetDir(game->path);
+	g_Config.currentDirectory = retro_base_dir;
+	g_Config.externalDirectory = retro_base_dir;
+	g_Config.memStickDirectory = retro_save_dir;
+	g_Config.flash0Directory = retro_base_dir + "flash0" DIR_SEP;
+	g_Config.internalDataDirectory = retro_base_dir;
 
-   g_Config.currentDirectory      = retro_base_dir;
-   g_Config.externalDirectory     = retro_base_dir;
-   g_Config.memStickDirectory     = retro_save_dir;
-   g_Config.flash0Directory       = retro_base_dir + "flash0" DIR_SEP;
-   g_Config.internalDataDirectory = retro_base_dir;
+	VFSRegister("", new DirectoryAssetReader(retro_base_dir.c_str()));
 
-   VFSRegister("", new DirectoryAssetReader(retro_base_dir.c_str()));
+	coreState = CORE_POWERUP;
+	ctx = LibretroGraphicsContext::CreateGraphicsContext();
+	INFO_LOG(SYSTEM, "Using %s backend", ctx->Ident());
 
-   coreState = CORE_POWERUP;
-   ctx       = LibretroGraphicsContext::CreateGraphicsContext();
-   INFO_LOG(SYSTEM, "Using %s backend", ctx->Ident());
+	Core_SetGraphicsContext(ctx);
+	SetGPUBackend((GPUBackend)g_Config.iGPUBackend);
 
-   Core_SetGraphicsContext(ctx);
-   SetGPUBackend((GPUBackend)g_Config.iGPUBackend);
+	useEmuThread = ctx->GetGPUCore() == GPUCORE_GLES;
 
-   useEmuThread              = ctx->GetGPUCore() == GPUCORE_GLES;
-
-   CoreParameter coreParam   = {};
-   coreParam.enableSound     = true;
-   coreParam.fileToStart     = std::string(game->path);
-   coreParam.mountIso        = "";
-   coreParam.startBreak      = false;
-   coreParam.printfEmuLog    = true;
-   coreParam.headLess        = true;
-   coreParam.unthrottle      = true;
-   coreParam.graphicsContext = ctx;
-   coreParam.gpuCore         = ctx->GetGPUCore();
-   coreParam.cpuCore         = CPUCore::JIT;
-   check_variables(coreParam);
-
-#if 0
-   g_Config.bVertexDecoderJit = (coreParam.cpuCore == CPU_JIT) ? true : false;
+	CoreParameter coreParam = {};
+	coreParam.enableSound = true;
+	coreParam.fileToStart = std::string(game->path);
+	coreParam.mountIso = "";
+	coreParam.startBreak = false;
+	coreParam.printfEmuLog = true;
+	coreParam.headLess = true;
+	coreParam.unthrottle = true;
+	coreParam.graphicsContext = ctx;
+	coreParam.gpuCore = ctx->GetGPUCore();
+	coreParam.cpuCore = CPUCore::JIT;
+	g_Config.bVertexDecoderJit = false;
+#ifdef HAVE_LIBNX
+    // TODO
+    g_Config.iNumWorkerThreads = 3;
 #endif
+	check_variables(coreParam);
+	
+	if(g_Config.bVertexDecoderJit)
+		g_Config.bVertexDecoderJit = (coreParam.cpuCore == CPUCore::JIT) ? true : false;
 
    if (!PSP_InitStart(coreParam, &error_string))
    {

@@ -27,6 +27,23 @@
 #include <errno.h>
 #endif
 
+#ifdef HAVE_LIBNX
+// Toolchain is missing strnlen
+size_t strnlen(const char *s, size_t maxlen)
+{
+	size_t i;
+	for(i = 0; i < maxlen; i++)
+	{
+		if(s[i] == '\0')
+		{
+			break;
+		}
+	}
+
+	return i;
+}
+#endif
+
 // Generic function to get last error message.
 // Call directly after the command or use the error num.
 // This function might change the error code.
@@ -51,6 +68,8 @@ std::string GetStringErrorMsg(int errCode) {
 	char err_str[buff_size] = {};
 	snprintf(err_str, buff_size, "%s", ConvertWStringToUTF8(err_strw).c_str());
 	return std::string(err_str);
+#elif defined(HAVE_LIBNX)
+	return "Unknown error";
 #else
 	char err_str[buff_size] = {};
 
