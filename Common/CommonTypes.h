@@ -44,6 +44,25 @@ typedef signed __int64 s64;
 
 #else
 
+#ifdef HAVE_LIBNX
+// Some HID conflicts
+#define KEY_UP PKEY_UP
+#define KEY_DOWN PKEY_DOWN
+#include <switch.h>
+// Cleanup
+#undef KEY_UP
+#undef KEY_DOWN
+
+// Conflicting types with libnx
+#ifndef _u64
+#define u64 _u64
+#endif // _u64
+
+#ifndef s64
+#define s64 _s64
+#endif // _s64
+#endif // HAVE_LIBNX
+
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;

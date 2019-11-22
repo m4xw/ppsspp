@@ -4,7 +4,7 @@
 #include "Core/ConfigValues.h"
 #include "Core/System.h"
 #include "gfx_es2/gpu_features.h"
-
+#include <glsym/rglgen.h>
 #include "libretro/LibretroGLContext.h"
 
 bool LibretroGLContext::Init() {
@@ -15,16 +15,12 @@ bool LibretroGLContext::Init() {
 	return true;
 }
 
+extern const struct rglgen_sym_map rglgen_symbol_map_ppsspp;
 void LibretroGLContext::CreateDrawContext() {
 	if (!glewInitDone) {
-#if !defined(IOS) && !defined(USING_GLES2)
-		if (glewInit() != GLEW_OK) {
-			ERROR_LOG(G3D, "glewInit() failed.\n");
-			return;
-		}
-#endif
-		glewInitDone = true;
+		rglgen_resolve_symbols_custom(&eglGetProcAddress, &rglgen_symbol_map_ppsspp);
 		CheckGLExtensions();
+        glewInitDone = true;
 	}
 	draw_ = Draw::T3DCreateGLContext();
 	renderManager_ = (GLRenderManager *)draw_->GetNativeObject(Draw::NativeObject::RENDER_MANAGER);

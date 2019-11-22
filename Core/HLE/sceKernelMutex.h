@@ -17,6 +17,11 @@
 
 #pragma once
 
+#ifdef HAVE_LIBNX
+// Conflicting Type
+#define Mutex _Mutex
+#endif // HAVE_LIBNX
+
 int sceKernelCancelMutex(SceUID uid, int count, u32 numWaitThreadsPtr);
 int sceKernelCreateMutex(const char *name, u32 attr, int initialCount, u32 optionsPtr);
 int sceKernelDeleteMutex(SceUID id);

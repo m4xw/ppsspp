@@ -45,6 +45,9 @@ static int hint_location;
 #elif defined(_WIN32)
 static SYSTEM_INFO sys_info;
 #define MEM_PAGE_SIZE (uintptr_t)(sys_info.dwPageSize)
+#elif defined(HAVE_LIBNX)
+#include <malloc.h> // memalign
+#define MEM_PAGE_SIZE (0x1000)
 #else
 #define MEM_PAGE_SIZE (getpagesize())
 #endif
@@ -73,12 +76,14 @@ static uint32_t ConvertProtFlagsWin32(uint32_t flags) {
 
 static uint32_t ConvertProtFlagsUnix(uint32_t flags) {
 	uint32_t protect = 0;
+#ifndef HAVE_LIBNX // We don't need this
 	if (flags & MEM_PROT_READ)
 		protect |= PROT_READ;
 	if (flags & MEM_PROT_WRITE)
 		protect |= PROT_WRITE;
 	if (flags & MEM_PROT_EXEC)
 		protect |= PROT_EXEC;
+#endif // HAVE_LIBNX
 	return protect;
 }
 
@@ -169,14 +174,17 @@ void *AllocateExecutableMemory(size_t size) {
 	}
 #endif
 
+#ifdef HAVE_LIBNX
+	void* ptr = malloc(size); // Let's just pray
+#else
 	int prot = PROT_READ | PROT_WRITE | PROT_EXEC;
 	if (PlatformIsWXExclusive())
 		prot = PROT_READ | PROT_WRITE;  // POST_EXEC is added later in this case.
 
-	void* ptr = mmap(map_hint, size, prot, MAP_ANON | MAP_PRIVATE, -1, 0);
-#endif /* defined(_WIN32) */
+	void* ptr = mmap(map_hint, size, prot, MAP_ANON | MAP_PRIVATE, -1, 0);#endif // HAVE_LIBNX
+#endif // defined(_WIN32)
 
-#if !defined(_WIN32)
+#if !defined(_WIN32) && !defined(HAVE_LIBNX)
 	static const void *failed_result = MAP_FAILED;
 #else
 	static const void *failed_result = nullptr;
@@ -216,6 +224,8 @@ void *AllocateMemoryPages(size_t size, uint32_t memProtFlags) {
 #endif
 	if (!ptr)
 		PanicAlert("Failed to allocate raw memory");
+#elif defined(HAVE_LIBNX)
+    void* ptr = malloc(size);
 #else
 	uint32_t protect = ConvertProtFlagsUnix(memProtFlags);
 	void *ptr = mmap(0, size, protect, MAP_ANON | MAP_PRIVATE, -1, 0);
@@ -235,7 +245,7 @@ void *AllocateAlignedMemory(size_t size, size_t alignment) {
 	void* ptr =  _aligned_malloc(size,alignment);
 #else
 	void* ptr = NULL;
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(HAVE_LIBNX)
 	ptr = memalign(alignment, size);
 #else
 	if (posix_memalign(&ptr, alignment, size) != 0)
@@ -255,6 +265,11 @@ void *AllocateAlignedMemory(size_t size, size_t alignment) {
 void FreeMemoryPages(void *ptr, size_t size) {
 	if (!ptr)
 		return;
+
+#ifdef HAVE_LIBNX
+	free(ptr);
+	return;
+#else
 	uintptr_t page_size = GetMemoryProtectPageSize();
 	size = (size + page_size - 1) & (~(page_size - 1));
 #ifdef _WIN32
@@ -263,6 +278,7 @@ void FreeMemoryPages(void *ptr, size_t size) {
 #else
 	munmap(ptr, size);
 #endif
+#endif // HAVE_LIBNX
 }
 
 void FreeAlignedMemory(void* ptr) {
@@ -271,7 +287,7 @@ void FreeAlignedMemory(void* ptr) {
 #ifdef _WIN32
 	_aligned_free(ptr);
 #else
-	free(ptr);
+    free(ptr);
 #endif
 }
 
@@ -315,6 +331,8 @@ bool ProtectMemoryPages(const void* ptr, size_t size, uint32_t memProtFlags) {
 	}
 #endif
 	return true;
+#elif defined(HAVE_LIBNX)
+    return true;
 #else
 	uint32_t protect = ConvertProtFlagsUnix(memProtFlags);
 	uintptr_t page_size = GetMemoryProtectPageSize();

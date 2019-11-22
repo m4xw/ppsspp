@@ -376,7 +376,14 @@ private:
 protected:
 	inline void Write32(u32 value)
 	{
+#ifdef HAVE_LIBNX
+		if(activeJitController) // This should be safe as long access isn't multi threaded
+		{
+			*(u32*)((intptr_t)m_code - (intptr_t)activeJitController->rx_addr + (intptr_t)activeJitController->rw_addr) = value;
+		}
+#else
 		*(u32*)m_code = value;
+#endif
 		m_code += 4;
 	}
 

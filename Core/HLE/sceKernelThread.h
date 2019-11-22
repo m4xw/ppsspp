@@ -26,6 +26,12 @@
 // There's a good description of the thread scheduling rules in:
 // http://code.google.com/p/jpcsp/source/browse/trunk/src/jpcsp/HLE/modules150/ThreadManForUser.java
 
+#ifdef HAVE_LIBNX
+// Conflicting types
+#define Thread _Thread
+#define ThreadContext _ThreadContext
+#endif // HAVE_LIBNX
+
 class PSPThread;
 class DebugInterface;
 

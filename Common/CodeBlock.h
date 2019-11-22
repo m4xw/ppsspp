@@ -7,6 +7,13 @@
 #include "Common.h"
 #include "MemoryUtil.h"
 
+#ifdef HAVE_LIBNX
+#include <switch.h>
+// This is a bit of a whacky solution, however this is the simplest implementation for it
+// given the restrictions in Horizon
+extern Jit* activeJitController;
+#endif // HAVE_LIBNX
+
 // Everything that needs to generate code should inherit from this.
 // You get memory management for free, plus, you can use all emitter functions without
 // having to prefix them with gen-> or something similar.
@@ -15,6 +22,9 @@
 
 class CodeBlockCommon {
 public:
+#ifdef HAVE_LIBNX
+    Jit jitController;
+#endif // HAVE_LIBNX
 	CodeBlockCommon() : region(nullptr), region_size(0) {}
 	virtual ~CodeBlockCommon() {}
 
@@ -55,8 +65,19 @@ public:
 	void AllocCodeSpace(int size) {
 		region_size = size;
 		// The protection will be set to RW if PlatformIsWXExclusive.
+        
+#ifdef HAVE_LIBNX
+		if(R_FAILED(jitCreate(&jitController, size))) 
+		{
+			printf("Failed to create Jitbuffer of size %d\n", size);
+		}
+		printf("[NXJIT]: Initialized RX: %x RW: %x\n", jitController.rx_addr, jitController.rw_addr);
+		region = (u8*)jitController.rx_addr;
+		activeJitController = &jitController;
+#else
 		region = (u8*)AllocateExecutableMemory(region_size);
-		T::SetCodePointer(region);
+#endif
+        T::SetCodePointer(region);
 	}
 
 	// Always clear code space with breakpoints, so that if someone accidentally executes
@@ -83,6 +104,9 @@ public:
 			PanicAlert("Can't nest BeginWrite calls");
 		}
 #endif
+#ifdef HAVE_LIBNX
+		activeJitController = &jitController;
+#endif
 		// In case the last block made the current page exec/no-write, let's fix that.
 		if (PlatformIsWXExclusive()) {
 			writeStart_ = GetCodePtr();
@@ -101,8 +125,14 @@ public:
 
 	// Call this when shutting down. Don't rely on the destructor, even though it'll do the job.
 	void FreeCodeSpace() {
+#ifndef HAVE_LIBNX
 		ProtectMemoryPages(region, region_size, MEM_PROT_READ | MEM_PROT_WRITE);
 		FreeMemoryPages(region, region_size);
+#else
+		activeJitController = nullptr;
+		jitClose(&jitController);
+		printf("[NXJIT]: Jit closed\n");
+#endif
 		region = nullptr;
 		region_size = 0;
 	}
@@ -112,7 +142,7 @@ public:
 	}
 
 	const u8 *GetCodePtr() const override {
-		return T::GetCodePointer();
+			return T::GetCodePointer();
 	}
 
 	void ResetCodePtr(int offset) {
@@ -126,4 +156,3 @@ public:
 private:
 	const uint8_t *writeStart_;
 };
-

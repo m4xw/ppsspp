@@ -18,7 +18,9 @@
 #pragma once
 
 #ifndef _WIN32
+#ifndef HAVE_LIBNX
 #include <sys/mman.h>
+#endif // HAVE_LIBNX
 #endif
 #include <stdint.h>
 

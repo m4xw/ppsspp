@@ -1454,6 +1454,7 @@ int getPTPSocketCount(void) {
 }
 
 int initNetwork(SceNetAdhocctlAdhocId *adhoc_id){
+#ifndef HAVE_LIBNX // Disable networking for libnx, will need more work
 	int iResult = 0;
 	metasocket = (int)INVALID_SOCKET;
 	metasocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -1521,6 +1522,9 @@ int initNetwork(SceNetAdhocctlAdhocId *adhoc_id){
 	else{
 		return -1;
 	}
+#else
+	return -1;
+#endif // HAVE_LIBNX
 }
 
 bool isBroadcastMAC(const SceNetEtherAddr * addr) {
