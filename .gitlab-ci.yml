@@ -1,0 +1,52 @@
+variables:
+  STATIC_RETROARCH_BRANCH: master
+
+stages:
+  - build-prepare
+  - build-shared
+  - build-static
+  - test
+  
+libretro-rebase-upstream-auto:
+  image: $CI_SERVER_HOST:4567/libretro/infrastructure/libretro-build-amd64-ubuntu:latest
+  stage: build-prepare
+  only: [chat]
+  before_script:
+    - url_host=`git remote get-url origin | sed -e "s/https:\/\/gitlab-ci-token:.*@//g"`
+  script:
+    - git config user.name $GIT_ACCESS_USER
+    - git config user.email $GIT_ACCESS_EMAIL
+    - git fetch origin
+    - git reset --hard
+    - git clean -xxffdd
+    - git checkout $CI_COMMIT_REF_NAME
+    - git reset --hard origin/$CI_COMMIT_REF_NAME
+    - git remote set-url origin "https://$GIT_ACCESS_USER:$GIT_ACCESS_TOKEN@${url_host}"
+    - git remote add upstream "https://github.com/hrydgard/ppsspp.git"
+    - git fetch upstream
+    - git rebase upstream/master
+    - git push origin ${CI_BUILD_REF_NAME} --force || true
+
+libretro-build-libnx-aarch64:
+  image: $CI_SERVER_HOST:4567/libretro/infrastructure/libretro-build-libnx-devkitpro:latest
+  stage: build-static
+  script:
+    - git submodule init
+    - git submodule sync
+    - git submodule update
+    - cd libretro/
+    - make -j10 platform=libnx
+    - wget -O retroarch-precompiled.zip "https://$CI_SERVER_HOST/libretro/RetroArch/-/jobs/artifacts/$STATIC_RETROARCH_BRANCH/download?job=build-static-retroarch-libnx-aarch64"
+    - unzip retroarch-precompiled.zip
+    - rm -f retroarch-precompiled.zip
+    - mv ppsspp_libretro_libnx.a retroarch-precompiled/libretro_libnx.a
+    - cd retroarch-precompiled/
+    - make -f Makefile.libnx -j10
+    - mv retroarch_switch.nro ../../ppsspp_libretro_libnx.nro
+    - mv retroarch_switch.elf ../../ppsspp_libretro_libnx.elf
+    - cd ../../
+  artifacts:
+    paths:
+    - ppsspp_libretro_libnx.nro
+    - ppsspp_libretro_libnx.elf
+    expire_in: 1 month
