@@ -181,8 +181,9 @@ void *AllocateExecutableMemory(size_t size) {
 	if (PlatformIsWXExclusive())
 		prot = PROT_READ | PROT_WRITE;  // POST_EXEC is added later in this case.
 
-	void* ptr = mmap(map_hint, size, prot, MAP_ANON | MAP_PRIVATE, -1, 0);#endif // HAVE_LIBNX
-#endif // defined(_WIN32)
+	void* ptr = mmap(map_hint, size, prot, MAP_ANON | MAP_PRIVATE, -1, 0);
+#endif // HAVE_LIBNX
+#endif /* defined(_WIN32) */
 
 #if !defined(_WIN32) && !defined(HAVE_LIBNX)
 	static const void *failed_result = MAP_FAILED;
