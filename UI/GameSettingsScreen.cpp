@@ -1149,10 +1149,9 @@ void GameSettingsScreen::onFinish(DialogResult result) {
 			Audio_Init();
 	}
 
-#ifndef HAVE_LIBNX
 	Reporting::Enable(enableReports_, "report.ppsspp.org");
 	Reporting::UpdateConfig();
-#endif // HAVE_LIBNX
+
 	g_Config.Save("GameSettingsScreen::onFinish");
 	if (editThenRestore_) {
 		// In case we didn't have the title yet before, try again.
