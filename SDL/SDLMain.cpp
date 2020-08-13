@@ -649,8 +649,8 @@ int main(int argc, char *argv[]) {
 		dpi_scale = set_dpi;
 	}
 
-	dp_xres = (float)pixel_xres * dpi_scale * 0.70f;
-	dp_yres = (float)pixel_yres * dpi_scale * 0.70f;
+	dp_xres = (float)pixel_xres * dpi_scale;
+	dp_yres = (float)pixel_yres * dpi_scale;
 
 	// Mac / Linux
 	char path[2048];

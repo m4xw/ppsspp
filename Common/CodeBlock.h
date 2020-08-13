@@ -179,4 +179,7 @@ private:
 	// Note: this is a readable pointer.
 	const uint8_t *writeStart_ = nullptr;
 	uint8_t *writableRegion = nullptr;
+#if PPSSPP_PLATFORM(SWITCH)
+	Jit jitController;
+#endif // SWITCH
 };

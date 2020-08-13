@@ -159,6 +159,7 @@ if(UNIX AND NOT (APPLE OR ANDROID) AND VULKAN)
 endif()
 
 if(USE_LIBNX)
+	set(USE_MINIUPNPC OFF)
 	add_definitions(-DHAVE_LIBNX -D__SWITCH__)
 	add_compile_options(-fPIC)
 endif()
@@ -828,8 +829,8 @@ if(NOT MSVC)
 endif()
 
 
-find_package(LIBZIP)
-if(LIBZIP_FOUND AND USE_SYSTEM_LIBZIP)
+find_package(LibZip)
+if(NOT USE_LIBNX AND LIBZIP_FOUND AND USE_SYSTEM_LIBZIP)
 	add_definitions(-DSHARED_LIBZIP)
 else()
 	add_library(libzip STATIC
@@ -895,7 +896,7 @@ else()
 endif()
 
 # Arm platforms require at least libpng17.
-if(ANDROID OR ARMV7 OR ARM64 OR ARM OR IOS)
+if(ANDROID OR ARMV7 OR (ARM64 AND NOT USE_LIBNX) OR ARM OR IOS)
 	set(PNG_REQUIRED_VERSION 1.7)
 else()
 	set(PNG_REQUIRED_VERSION 1.6)
@@ -1871,6 +1872,8 @@ set(CoreExtraLibs ${CoreExtraLibs} armips)
 if(USE_LIBNX)
 	set(MOBILE_DEVICE ON)
 	add_definitions(-DGLEW_NO_GLU)
+	add_compile_options(-fcommon)
+	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 	set(CoreExtraLibs ${CoreExtraLibs} EGL glapi drm_nouveau nx)
 endif()
 

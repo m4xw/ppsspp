@@ -42,11 +42,13 @@ typedef signed __int64 s64;
 #define KEY_DOWN PKEY_DOWN
 // Other conflicts
 #define Event _Event
+#define Framebuffer _Framebuffer
 #include <switch.h>
 // Cleanup
 #undef KEY_UP
 #undef KEY_DOWN
 #undef Event
+#undef Framebuffer
 
 // Conflicting types with libnx
 #ifndef _u64
