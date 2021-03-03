@@ -58,6 +58,12 @@ typedef signed __int64 s64;
 #ifndef s64
 #define s64 _s64
 #endif // _s64
+
+typedef unsigned char   u_char;
+typedef unsigned short  u_short;
+typedef unsigned int    u_int;
+typedef unsigned long   u_long;
+
 #endif // HAVE_LIBNX
 
 typedef unsigned char u8;

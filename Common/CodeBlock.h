@@ -11,6 +11,7 @@
 #include "Common/MemoryUtil.h"
 
 #ifdef HAVE_LIBNX
+#include <cstdio>
 #include <switch.h>
 // This is a bit of a whacky solution, however this is the simplest implementation for it
 // given the restrictions in Horizon
