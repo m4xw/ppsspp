@@ -521,10 +521,10 @@ void NativeInit(int argc, const char *argv[], const char *savegame_dir, const ch
 	else if (getenv("HOME") != NULL)
 		config = getenv("HOME") + std::string("/.config");
 	else // Just in case
-		config = "./config";
+		config = "config";
 
-	g_Config.memStickDirectory = config + "/ppsspp/";
-	g_Config.flash0Directory = File::GetExeDirectory() + "/assets/flash0/";
+	g_Config.memStickDirectory = g_Config.internalDataDirectory + config + "/ppsspp/";
+	g_Config.flash0Directory = g_Config.internalDataDirectory + "assets/flash0/";
 #endif
 
 	if (cache_dir && strlen(cache_dir)) {

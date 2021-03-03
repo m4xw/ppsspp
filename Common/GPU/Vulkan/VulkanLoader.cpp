@@ -25,7 +25,7 @@
 #include "Common/System/System.h"
 
 #ifndef _WIN32
-#include <dlfcn.h>
+//#include <dlfcn.h>
 #endif
 
 PFN_vkCreateInstance vkCreateInstance;
@@ -225,11 +225,16 @@ const char *VulkanResultToString(VkResult res);
 bool g_vulkanAvailabilityChecked = false;
 bool g_vulkanMayBeAvailable = false;
 
-#define LOAD_INSTANCE_FUNC(instance, x) x = (PFN_ ## x)vkGetInstanceProcAddr(instance, #x); if (!x) {INFO_LOG(G3D, "Missing (instance): %s", #x);}
-#define LOAD_DEVICE_FUNC(instance, x) x = (PFN_ ## x)vkGetDeviceProcAddr(instance, #x); if (!x) {INFO_LOG(G3D, "Missing (device): %s", #x);}
-#define LOAD_GLOBAL_FUNC(x) x = (PFN_ ## x)dlsym(vulkanLibrary, #x); if (!x) {INFO_LOG(G3D,"Missing (global): %s", #x);}
+// Just random stubs
+#define RTLD_NOW 0
+#define RTLD_LOCAL 1
+#define dlopen(...) NULL
+#define dlclose(...)
+#define LOAD_INSTANCE_FUNC(instance, x) x = (PFN_ ## x)NULL;
+#define LOAD_DEVICE_FUNC(instance, x) x = (PFN_ ## x)NULL;
+#define LOAD_GLOBAL_FUNC(x) x = (PFN_ ## x)NULL;
 
-#define LOAD_GLOBAL_FUNC_LOCAL(lib, x) (PFN_ ## x)dlsym(lib, #x);
+#define LOAD_GLOBAL_FUNC_LOCAL(lib, x)  (PFN_ ## x)NULL;
 
 static const char *device_name_blacklist[] = {
 	"NVIDIA:SHIELD Tablet K1",
@@ -455,6 +460,7 @@ bail:
 
 bool VulkanLoad() {
 	if (!vulkanLibrary) {
+#ifndef HAVE_LIBNX
 #ifndef _WIN32
 		for (int i = 0; i < ARRAY_SIZE(so_names); i++) {
 			vulkanLibrary = dlopen(so_names[i], RTLD_NOW | RTLD_LOCAL);
@@ -467,6 +473,7 @@ bool VulkanLoad() {
 		// LoadLibrary etc
 		vulkanLibrary = LoadLibrary(L"vulkan-1.dll");
 #endif
+#endif // !HAVE_LIBNX
 		if (!vulkanLibrary) {
 			return false;
 		}

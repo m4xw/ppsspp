@@ -17,6 +17,11 @@
 
 #pragma once
 
+#ifdef HAVE_LIBNX
+// Conflicting type
+#define Semaphore _Semaphore
+#endif // HAVE_LIBNX
+
 int sceKernelCancelSema(SceUID id, int newCount, u32 numWaitThreadsPtr);
 int sceKernelCreateSema(const char* name, u32 attr, int initVal, int maxVal, u32 optionPtr);
 int sceKernelDeleteSema(SceUID id);

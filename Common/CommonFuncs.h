@@ -30,6 +30,8 @@
 
 #if defined(_M_IX86) || defined(_M_X86)
 #define Crash() {asm ("int $3");}
+#elif defined(HAVE_LIBNX)
+#define Crash() { while(1); };
 #else
 #include <signal.h>
 #define Crash() {kill(getpid(), SIGINT);}

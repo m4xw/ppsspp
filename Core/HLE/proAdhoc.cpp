@@ -32,13 +32,22 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#if !PPSSPP_PLATFORM(SWITCH)
 #include <ifaddrs.h>
+#endif // !PPSSPP_PLATFORM(SWITCH)
 #endif
 
 #ifndef MSG_NOSIGNAL
 // Default value to 0x00 (do nothing) in systems where it's not supported.
 #define MSG_NOSIGNAL 0x00
 #endif
+
+#if defined(HAVE_LIBNX) || PPSSPP_PLATFORM(SWITCH)
+#undef __BSD_VISIBLE
+#define __BSD_VISIBLE 1
+#include <switch.h>
+#define TCP_MAXSEG 2
+#endif // HAVE_LIBNX
 
 #include <cstring>
 
@@ -57,7 +66,7 @@
 #include "Core/Instance.h"
 #include "proAdhoc.h" 
 
-uint16_t portOffset;
+uint16_t portOffset = g_Config.iPortOffset;
 uint32_t minSocketTimeoutUS;
 uint32_t fakePoolSize                 = 0;
 SceNetAdhocMatchingContext * contexts = NULL;
@@ -1761,6 +1770,7 @@ int getLocalIp(sockaddr_in* SocketAddress) {
 		return 0;
 	}
 
+#if !PPSSPP_PLATFORM(SWITCH)
 	if (metasocket != (int)INVALID_SOCKET) {
 		struct sockaddr_in localAddr;
 		localAddr.sin_addr.s_addr = INADDR_ANY;
@@ -1771,6 +1781,7 @@ int getLocalIp(sockaddr_in* SocketAddress) {
 			return 0;
 		}
 	}
+#endif // !PPSSPP_PLATFORM(SWITCH)
 
 // Fallback if not connected to AdhocServer
 #if defined(_WIN32)
@@ -2018,7 +2029,7 @@ int setUDPConnReset(int udpsock, bool enabled) {
 	return -1;
 }
 
-#if !defined(TCP_KEEPIDLE)
+#if !defined(TCP_KEEPIDLE) && !PPSSPP_PLATFORM(SWITCH)
 #define TCP_KEEPIDLE	TCP_KEEPALIVE //TCP_KEEPIDLE on Linux is equivalent to TCP_KEEPALIVE on macOS
 #endif
 // VS 2017 compatibility
@@ -2034,6 +2045,7 @@ int setSockKeepAlive(int sock, bool keepalive, const int keepinvl, const int kee
 	int optval = keepalive ? 1 : 0;
 	int optlen = sizeof(optval);
 	int result = setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char*)&optval, optlen);
+#if !PPSSPP_PLATFORM(SWITCH)
 	if (result == 0 && keepalive) {
 		if (getsockopt(sock, SOL_SOCKET, SO_TYPE, (char*)&optval, (socklen_t*)&optlen) == 0 && optval == SOCK_STREAM) {
 			optlen = sizeof(optval);
@@ -2045,6 +2057,7 @@ int setSockKeepAlive(int sock, bool keepalive, const int keepinvl, const int kee
 			setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, (char*)&optval, optlen);
 		}
 	}
+#endif // !PPSSPP_PLATFORM(SWITCH)
 	return result;
 }
 
@@ -2120,6 +2133,44 @@ int initNetwork(SceNetAdhocctlAdhocId *adhoc_id){
 	setSockNoDelay(metasocket, 1);
 	// Switch to Nonblocking Behaviour
 	changeBlockingMode(metasocket, 1);
+
+	struct sockaddr_in server_addr;
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(SERVER_PORT); //27312 // Maybe read this from config too
+
+	// Resolve dns
+	addrinfo * resultAddr;
+	addrinfo * ptr;
+	in_addr serverIp;
+	serverIp.s_addr = INADDR_ANY;
+
+	addrinfo hints = {0};
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = /*AI_V4MAPPED |*/ AI_ADDRCONFIG;
+	hints.ai_protocol = 0;
+	hints.ai_family = AF_INET;
+
+	iResult = getaddrinfo(g_Config.proAdhocServer.c_str(),"27312",&hints,&resultAddr);
+	if (iResult == EAI_AGAIN) {
+		// Temporary failure.  Since this already blocks, let's just try once more.
+		sleep_ms(1);
+		iResult = getaddrinfo(g_Config.proAdhocServer.c_str(),"27312",&hints,&resultAddr);
+	}
+
+	if (iResult != 0) {
+		ERROR_LOG(SCENET, "DNS Error (%s)\n", g_Config.proAdhocServer.c_str());
+		host->NotifyUserMessage(n->T("DNS Error connecting to ") + g_Config.proAdhocServer, 2.0f, 0x0000ff);
+		return iResult;
+	}
+	for (ptr = resultAddr; ptr != NULL; ptr = ptr->ai_next) {
+		switch (ptr->ai_family) {
+		case AF_INET:
+			serverIp = ((sockaddr_in *)ptr->ai_addr)->sin_addr;
+			break;
+		}
+	}
+
+	freeaddrinfo(resultAddr);
 
 	// If Server is at localhost Try to Bind socket to specific adapter before connecting to prevent 2nd instance being recognized as already existing 127.0.0.1 by AdhocServer
 	// (may not works in WinXP/2003 for IPv4 due to "Weak End System" model)

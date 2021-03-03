@@ -1,8 +1,9 @@
 FFMPEGDIR		= $(CORE_DIR)/ffmpeg
 LIBRETRODIR		= $(CORE_DIR)/libretro
+RETROCOMMONDIR	= $(CORE_DIR)/libretro/libretro-common
 COREDIR			= $(CORE_DIR)/Core
 COMMONDIR		= $(CORE_DIR)/Common
-GPUCOMMONDIR		= $(CORE_DIR)/GPU/Common
+GPUCOMMONDIR    = $(CORE_DIR)/GPU/Common
 GPUDIR			= $(CORE_DIR)/GPU
 EXTDIR			= $(CORE_DIR)/ext
 NATIVEDIR		= $(EXTDIR)/native
@@ -29,7 +30,9 @@ INCFLAGS += \
 	-I$(EXTDIR)/libkirk \
 	-I$(EXTDIR)/xbrz \
 	-I$(EXTDIR)/xxhash \
-	-I$(EXTDIR)/glew
+	-I$(EXTDIR)/glew \
+	-I$(RETROCOMMONDIR)/include \
+	-I$(RETROCOMMONDIR)
 
 ifeq ($(PLATFORM_EXT), android)
 	INCFLAGS += -I$(EXTDIR)/libzip
@@ -94,8 +97,15 @@ ifeq ($(PLATFORM_EXT), android)
 		$(COMMONDIR)/Math/fast/fast_matrix.c
 endif
 
-SOURCES_C += $(LIBRETRODIR)/ext/glew/glew.c
+SOURCES_C += $(RETROCOMMONDIR)/glsym/glsym_gl.c \
+		$(RETROCOMMONDIR)/glsym/rglgen.c \
+		$(NATIVEDIR)/math/fast/fast_math.c \
+		$(NATIVEDIR)/math/fast/fast_matrix.c
 
+SOURCES_CXX += $(COMMONDIR)/GL/GLInterface/EGL.cpp \
+			$(COMMONDIR)/GL/GLInterface/EGLSwitch.cpp \
+			$(COMMONDIR)/GL/GLInterface/GLInterface.cpp
+			
 SOURCES_C += \
 	$(EXTDIR)/libkirk/AES.c \
 	$(EXTDIR)/libkirk/amctrl.c \
@@ -546,7 +556,7 @@ ifeq ($(WITH_DYNAREC),1)
 				      $(EXTDIR)/libpng17/arm/filter_neon.S
 		endif
 	else ifeq ($(TARGET_ARCH),arm64)
-      DYNAFLAGS += -D_ARCH_64
+      DYNAFLAGS += -D_ARCH_64 -DARM64
       SOURCES_CXX += $(COMMONDIR)/Arm64Emitter.cpp \
 		     $(COMMONDIR)/ArmCPUDetect.cpp \
 		     $(COREDIR)/MIPS/ARM64/Arm64Asm.cpp \
@@ -569,11 +579,6 @@ ifeq ($(WITH_DYNAREC),1)
 					 $(COREDIR)/Util/AudioFormatNEON.cpp \
 					 $(COMMONDIR)/ColorConvNEON.cpp \
 					 $(GPUDIR)/Common/TextureDecoderNEON.cpp
-
-			SOURCES_C += $(EXTDIR)/libpng17/arm/arm_init.c \
-				     $(EXTDIR)/libpng17/arm/filter_neon_intrinsics.c
-			ASMFILES   += $(COMMONDIR)/math/fast/fast_matrix_neon.S \
-				      $(EXTDIR)/libpng17/arm/filter_neon.S
 		endif
    else
 	ifneq (,$(findstring msvc,$(platform)))
@@ -638,22 +643,7 @@ SOURCES_C += \
     $(EXTDIR)/miniupnp/miniupnpc/upnpdev.c \
     $(EXTDIR)/miniupnp/miniupnpc/upnperrors.c \
     $(EXTDIR)/miniupnp/miniupnpc/upnpreplyparse.c
-
-SOURCES_CXX += \
-	$(GPUDIR)/Vulkan/DepalettizeShaderVulkan.cpp \
-	$(GPUDIR)/Vulkan/DrawEngineVulkan.cpp \
-	$(GPUDIR)/Vulkan/FramebufferManagerVulkan.cpp \
-	$(GPUDIR)/Vulkan/GPU_Vulkan.cpp \
-	$(GPUDIR)/Vulkan/PipelineManagerVulkan.cpp \
-	$(GPUDIR)/Vulkan/ShaderManagerVulkan.cpp \
-	$(GPUDIR)/Vulkan/StateMappingVulkan.cpp \
-	$(GPUDIR)/Vulkan/StencilBufferVulkan.cpp \
-	$(GPUDIR)/Vulkan/TextureCacheVulkan.cpp \
-	$(GPUDIR)/Vulkan/TextureScalerVulkan.cpp \
-	$(GPUDIR)/Vulkan/VulkanUtil.cpp \
-	$(LIBRETRODIR)/LibretroVulkanContext.cpp \
-	$(LIBRETRODIR)/libretro_vulkan.cpp
-
+	
 ifneq ($(PLATFORM_EXT), darwin)
 	ifeq ($(PLATFORM_EXT), unix)
 		COREFLAGS += -DVK_USE_PLATFORM_XLIB_KHR

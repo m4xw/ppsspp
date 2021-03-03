@@ -187,14 +187,11 @@ bool Buffer::FlushSocket(uintptr_t sock, double timeout, bool *cancelled) {
 
 bool Buffer::ReadAll(int fd, int hintSize) {
 	std::vector<char> buf;
-	if (hintSize >= 65536 * 16) {
-		buf.resize(65536);
-	} else if (hintSize >= 1024 * 16) {
-		buf.resize(hintSize / 16);
+	if (hintSize >= 8192) {
+		buf.resize(8192);
 	} else {
-		buf.resize(4096);
+		buf.resize(1024);
 	}
-
 	while (true) {
 		int retval = recv(fd, &buf[0], (int)buf.size(), MSG_NOSIGNAL);
 		if (retval == 0) {
@@ -212,10 +209,8 @@ bool Buffer::ReadAll(int fd, int hintSize) {
 bool Buffer::ReadAllWithProgress(int fd, int knownSize, float *progress, bool *cancelled) {
 	static constexpr float CANCEL_INTERVAL = 0.25f;
 	std::vector<char> buf;
-	if (knownSize >= 65536 * 16) {
-		buf.resize(65536);
-	} else if (knownSize >= 1024 * 16) {
-		buf.resize(knownSize / 16);
+	if (knownSize >= 8192) {
+		buf.resize(8192);
 	} else {
 		buf.resize(1024);
 	}

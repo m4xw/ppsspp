@@ -48,6 +48,11 @@
 #include "Core/Reporting.h"
 #include "Core/Instance.h"
 
+#if PPSSPP_PLATFORM(SWITCH)
+// Missing toolchain define
+#define INADDR_NONE 0xFFFFFFFF
+#endif // PPSSPP_PLATFORM(SWITCH)
+
 static bool netInited;
 bool netInetInited;
 
