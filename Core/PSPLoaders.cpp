@@ -57,6 +57,10 @@
 #include "Core/HLE/sceKernelMemory.h"
 
 static std::thread loadingThread;
+#ifdef HAVE_LIBNX
+// Defined in FileUtil.cpp
+extern char *realpath(const char *name, char *resolved);
+#endif
 
 static void UseLargeMem(int memsize) {
 	if (memsize != 1) {

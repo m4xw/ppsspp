@@ -1179,6 +1179,8 @@ UI::EventReturn MainScreen::OnDownloadUpgrade(UI::EventParams &e) {
 	}
 #elif PPSSPP_PLATFORM(WINDOWS)
 	LaunchBrowser("https://www.ppsspp.org/downloads.html");
+#elif defined(HAVE_LIBNX)
+	// TODO
 #else
 	// Go directly to ppsspp.org and let the user sort it out
 	// (for details and in case downloads doesn't have their platform.)

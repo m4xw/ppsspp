@@ -3932,7 +3932,9 @@ void ARM64CodeBlock::PoisonMemory(int offset) {
 	// Less than optimal, but there would be nothing we could do but throw a runtime warning anyway.
 	// AArch64: 0xD4200000 = BRK 0
 	while (ptr < maxptr)
+	{
 		*ptr++ = 0xD4200000;
+	}
 }
 
 }  // namespace

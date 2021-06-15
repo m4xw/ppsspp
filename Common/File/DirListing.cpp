@@ -14,6 +14,8 @@
 #include <string>
 #include <set>
 #include <algorithm>
+#include <strings.h>
+
 #include <cstdio>
 #include <sys/stat.h>
 #include <ctype.h>

@@ -30,6 +30,10 @@
 #include "Core/MIPS/ARM64/Arm64Jit.h"
 #include "Core/MIPS/JitCommon/JitCommon.h"
 
+#ifdef HAVE_LIBNX
+Jit* activeJitController;
+#endif // HAVE_LIBNX
+
 using namespace Arm64Gen;
 
 //static int temp32; // unused?

@@ -38,6 +38,11 @@
 
 #include <algorithm>
 
+#ifdef HAVE_LIBNX
+// Defined in Misc.cpp
+extern size_t strnlen(const char *s, size_t maxlen);
+#endif // HAVE_LIBNX
+
 static const std::string ICON0_FILENAME = "ICON0.PNG";
 static const std::string ICON1_FILENAME = "ICON1.PMF";
 static const std::string PIC1_FILENAME = "PIC1.PNG";

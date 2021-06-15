@@ -95,6 +95,7 @@ bool GPU_Init(GraphicsContext *ctx, Draw::DrawContext *draw) {
 #else
 		return false;
 #endif
+#ifndef HAVE_LIBNX
 	case GPUCORE_VULKAN:
 		if (!ctx) {
 			ERROR_LOG(G3D, "Unable to init Vulkan GPU backend, no context");
@@ -102,6 +103,7 @@ bool GPU_Init(GraphicsContext *ctx, Draw::DrawContext *draw) {
 		}
 		SetGPU(new GPU_Vulkan(ctx, draw));
 		break;
+#endif // HAVE_LIBNX
 	}
 
 	return gpu != NULL;

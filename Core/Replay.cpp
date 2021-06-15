@@ -36,6 +36,11 @@
 #include "Core/HLE/sceKernelTime.h"
 #include "Core/HLE/sceRtc.h"
 
+#ifdef HAVE_LIBNX
+// Defined in Misc.cpp
+extern size_t strnlen(const char *s, size_t maxlen);
+#endif // HAVE_LIBNX
+
 enum class ReplayState {
 	IDLE,
 	EXECUTE,

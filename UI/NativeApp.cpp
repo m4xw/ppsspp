@@ -553,7 +553,7 @@ void NativeInit(int argc, const char *argv[], const char *savegame_dir, const ch
 	else if (getenv("HOME") != NULL)
 		config = getenv("HOME") + std::string("/.config");
 	else // Just in case
-		config = "./config";
+		config = "config";
 
 	g_Config.memStickDirectory = Path(config) / "ppsspp";
 	g_Config.flash0Directory = File::GetExeDirectory() / "assets/flash0";

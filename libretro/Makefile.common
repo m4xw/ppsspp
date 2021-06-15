@@ -1,8 +1,9 @@
 FFMPEGDIR		= $(CORE_DIR)/ffmpeg
 LIBRETRODIR		= $(CORE_DIR)/libretro
+RETROCOMMONDIR	= $(CORE_DIR)/libretro/libretro-common
 COREDIR			= $(CORE_DIR)/Core
 COMMONDIR		= $(CORE_DIR)/Common
-GPUCOMMONDIR		= $(CORE_DIR)/GPU/Common
+GPUCOMMONDIR    = $(CORE_DIR)/GPU/Common
 GPUDIR			= $(CORE_DIR)/GPU
 EXTDIR			= $(CORE_DIR)/ext
 NATIVEDIR		= $(EXTDIR)/native
@@ -32,7 +33,9 @@ INCFLAGS += \
 	-I$(EXTDIR)/libkirk \
 	-I$(EXTDIR)/xbrz \
 	-I$(EXTDIR)/xxhash \
-	-I$(EXTDIR)/glew
+	-I$(EXTDIR)/glew \
+	-I$(RETROCOMMONDIR)/include \
+	-I$(RETROCOMMONDIR)
 
 ifeq ($(PLATFORM_EXT), android)
 	INCFLAGS += -I$(EXTDIR)/libzip
@@ -161,14 +164,19 @@ ifeq ($(PLATFORM_EXT), android)
 			$(EXTDIR)/libzip/zip_source_file_stdio_named.c \
 			$(EXTDIR)/libzip/zip_random_unix.c
 	endif
-
-	SOURCES_C +=\
-		$(COMMONDIR)/Math/fast/fast_math.c \
-		$(COMMONDIR)/Math/fast/fast_matrix.c
 endif
 
-SOURCES_C += $(LIBRETRODIR)/ext/glew/glew.c
+SOURCES_C +=\
+	$(COMMONDIR)/Math/fast/fast_math.c \
+	$(COMMONDIR)/Math/fast/fast_matrix.c
 
+SOURCES_C += $(RETROCOMMONDIR)/glsym/glsym_gl.c \
+		$(RETROCOMMONDIR)/glsym/rglgen.c
+
+SOURCES_CXX += $(COMMONDIR)/GL/GLInterface/EGL.cpp \
+			$(COMMONDIR)/GL/GLInterface/EGLSwitch.cpp \
+			$(COMMONDIR)/GL/GLInterface/GLInterface.cpp
+			
 SOURCES_C += \
 	$(EXTDIR)/libkirk/AES.c \
 	$(EXTDIR)/libkirk/amctrl.c \
@@ -626,7 +634,7 @@ ifeq ($(WITH_DYNAREC),1)
 				      $(EXTDIR)/libpng17/arm/filter_neon.S
 		endif
 	else ifeq ($(TARGET_ARCH),arm64)
-      DYNAFLAGS += -D_ARCH_64
+      DYNAFLAGS += -D_ARCH_64 -DARM64
       SOURCES_CXX += $(COMMONDIR)/Arm64Emitter.cpp \
 		     $(COREDIR)/MIPS/ARM64/Arm64Asm.cpp \
 		     $(COREDIR)/MIPS/ARM64/Arm64CompALU.cpp \
@@ -648,11 +656,6 @@ ifeq ($(WITH_DYNAREC),1)
 					 $(COREDIR)/Util/AudioFormatNEON.cpp \
 					 $(COMMONDIR)/Data/Convert/ColorConvNEON.cpp \
 					 $(GPUDIR)/Common/TextureDecoderNEON.cpp
-
-			SOURCES_C += $(EXTDIR)/libpng17/arm/arm_init.c \
-				     $(EXTDIR)/libpng17/arm/filter_neon_intrinsics.c
-			ASMFILES   += $(COMMONDIR)/math/fast/fast_matrix_neon.S \
-				      $(EXTDIR)/libpng17/arm/filter_neon.S
 		endif
    else
 	ifneq (,$(findstring msvc,$(platform)))

@@ -1917,7 +1917,6 @@ int server_loop(int server)
 					// Switch Socket into Non-Blocking Mode
 					change_blocking_mode(loginresult, 1);
 				}
-
 				// Login User (Stream)
 				if (loginresult != -1) {
 					u32_le sip = addr.sin_addr.s_addr;

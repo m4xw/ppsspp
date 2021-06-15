@@ -68,6 +68,11 @@
 #include "GPU/GPUInterface.h"
 #include "GPU/GPUState.h"
 
+#ifdef HAVE_LIBNX
+// Defined in Misc.cpp
+extern size_t strnlen(const char *s, size_t maxlen);
+#endif // HAVE_LIBNX
+
 enum {
 	PSP_THREAD_ATTR_KERNEL = 0x00001000,
 	PSP_THREAD_ATTR_USER = 0x80000000,
