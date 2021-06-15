@@ -533,7 +533,7 @@ else
 	GLFLAGS += -DHAVE_OPENGL
 endif
 
-COREFLAGS += -D__LIBRETRO__ -DPPSSPP -DUSE_FFMPEG -DGLEW_STATIC -DGLEW_NO_GLU -DMINIUPNP_STATICLIB -fno-strict-aliasing -Wno-multichar -Wno-deprecated-register -fsigned-char -fomit-frame-pointer -Wno-attributes
+COREFLAGS += -D__LIBRETRO__ -DPPSSPP -DUSE_FFMPEG -DGLEW_STATIC -DGLEW_NO_GLU -fno-strict-aliasing -Wno-multichar -Wno-deprecated-register -fsigned-char -fomit-frame-pointer -Wno-attributes
 
 ifeq ($(DEBUG), 1)
 	ifneq (,$(findstring msvc,$(platform)))

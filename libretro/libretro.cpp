@@ -537,6 +537,8 @@ namespace Libretro
 } // namespace Libretro
 
 bool retro_load_game(const struct retro_game_info *game) {
+   std::string error_string;
+   
 	struct retro_input_descriptor desc[] = {
 		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left" },
 		{ 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up" },
