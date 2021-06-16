@@ -23,7 +23,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#if !PPSSPP_PLATFORM(SWITCH)
 #include <ifaddrs.h>
+#endif // !PPSSPP_PLATFORM(SWITCH)
 #include <unistd.h>
 #endif
 

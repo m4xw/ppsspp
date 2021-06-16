@@ -233,7 +233,6 @@ static RetroOption<bool> ppsspp_lazy_texture_caching("ppsspp_lazy_texture_cachin
 static RetroOption<bool> ppsspp_retain_changed_textures("ppsspp_retain_changed_textures", "Retain changed textures (speedup, mem hog)", false);
 static RetroOption<bool> ppsspp_force_lag_sync("ppsspp_force_lag_sync", "Force real clock sync (slower, less lag)", false);
 static RetroOption<int> ppsspp_spline_quality("ppsspp_spline_quality", "Spline/Bezier curves quality", { {"low", 0}, {"medium", 1}, {"high", 2} });
-static RetroOption<bool> ppsspp_disable_slow_framebuffer_effects("ppsspp_disable_slow_framebuffer_effects", "Disable slower effects (speedup)", false);
 
 void retro_set_environment(retro_environment_t cb)
 {
