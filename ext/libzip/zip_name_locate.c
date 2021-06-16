@@ -32,10 +32,15 @@
 */
 
 
-#include <string.h>
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
+
+#ifdef HAVE_LIBNX
+// All to get strcasecmp
+#define _GNU_SOURCE
+#include <stdio.h>
+#endif // HAVE_LIBNX
 
 #include "zipint.h"
 

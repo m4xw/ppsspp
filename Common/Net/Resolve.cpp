@@ -25,6 +25,9 @@
 #include <netdb.h>
 #if !PPSSPP_PLATFORM(SWITCH)
 #include <ifaddrs.h>
+#else
+// Wth?? more incompatbile codepaths
+#undef SIOCGIFCONF
 #endif // !PPSSPP_PLATFORM(SWITCH)
 #include <unistd.h>
 #endif
@@ -111,7 +114,7 @@ void DNSResolveFree(addrinfo *res)
 
 bool GetIPList(std::vector<std::string> &IP4s) {
 	char ipstr[INET6_ADDRSTRLEN]; // We use IPv6 length since it's longer than IPv4
-#if (__GLIBC__ > 2) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 3) || (__ANDROID_API__ >= 24) // getifaddrs first appeared in glibc 2.3, On Android officially supported since __ANDROID_API__ >= 24
+#if !PPSSPP_PLATFORM(SWITCH) && ((__GLIBC__ > 2) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 3) || (__ANDROID_API__ >= 24)) // getifaddrs first appeared in glibc 2.3, On Android officially supported since __ANDROID_API__ >= 24
 	INFO_LOG(SCENET, "GetIPList from getifaddrs");
 	struct ifaddrs* ifAddrStruct = NULL;
 	struct ifaddrs* ifa = NULL;

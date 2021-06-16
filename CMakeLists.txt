@@ -1994,7 +1994,7 @@ endif()
 #	target_link_libraries(native X11-xcb X11)
 #endif()
 
-set(GlslangLibs glslang OGLCompiler SPIRV SPVRemapper spirv-cross-glsl)
+set(GlslangLibs glslang OGLCompiler SPIRV spirv-cross-glsl)
 
 if(WIN32)
 	set(GlslangLibs ${GlslangLibs} spirv-cross-hlsl)
