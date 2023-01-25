@@ -203,6 +203,7 @@ endif()
 
 if(USE_LIBNX)
 	set(USE_MINIUPNPC OFF)
+	set(USE_ARMIPS OFF) # Needs trivial changes in filesystem submodule
 	add_definitions(-DHAVE_LIBNX -D__SWITCH__)
 	add_compile_options(-fPIC)
 endif()
