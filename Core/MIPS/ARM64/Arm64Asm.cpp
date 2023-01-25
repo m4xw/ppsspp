@@ -30,10 +30,6 @@
 #include "Core/MIPS/ARM64/Arm64Jit.h"
 #include "Core/MIPS/JitCommon/JitCommon.h"
 
-#if PPSSPP_PLATFORM(SWITCH)
-Jit* activeJitController;
-#endif // PPSSPP_PLATFORM(SWITCH)
-
 using namespace Arm64Gen;
 
 //static int temp32; // unused?
