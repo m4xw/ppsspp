@@ -1295,10 +1295,8 @@ void GameSettingsScreen::onFinish(DialogResult result) {
 
 	Reporting::Enable(enableReports_, "report.ppsspp.org");
 	Reporting::UpdateConfig();
-	if (!g_Config.Save("GameSettingsScreen::onFinish")) {
-		System_SendMessage("toast", "Failed to save settings!\nCheck permissions, or try to restart the device.");
-	}
 
+	g_Config.Save("GameSettingsScreen::onFinish");
 	if (editThenRestore_) {
 		// In case we didn't have the title yet before, try again.
 		std::shared_ptr<GameInfo> info = g_gameInfoCache->GetInfo(nullptr, gamePath_, 0);
@@ -1311,8 +1309,10 @@ void GameSettingsScreen::onFinish(DialogResult result) {
 	KeyMap::UpdateNativeMenuKeys();
 
 	// Wipe some caches after potentially changing settings.
+#if !PPSSPP_PLATFORM(SWITCH)
 	// Let's not send resize messages here, handled elsewhere.
 	NativeMessageReceived("gpu_configChanged", "");
+#endif // !PPSSPP_PLATFORM(SWITCH)
 }
 
 void GameSettingsScreen::sendMessage(const char *message, const char *value) {

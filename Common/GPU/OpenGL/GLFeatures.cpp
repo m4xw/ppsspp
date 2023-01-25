@@ -128,9 +128,7 @@ void ProcessGPUFeatures() {
 // http://stackoverflow.com/questions/16147700/opengl-es-using-tegra-specific-extensions-gl-ext-texture-array
 
 void CheckGLExtensions() {
-
 #if PPSSPP_API(ANY_GL)
-
 	// Make sure to only do this once. It's okay to call CheckGLExtensions from wherever.
 	if (extensionsDone)
 		return;
@@ -240,7 +238,6 @@ void CheckGLExtensions() {
 			gl_extensions.GLES3 = true;
 #ifdef USING_GLES2
 			// Try to load up the other funcs if we're not using glew.
-			gl3stubInit();
 #endif
 		}
 	} else {
@@ -275,7 +272,7 @@ void CheckGLExtensions() {
 			// number of times. Make sure to check for 3.0 in the shader version too to avoid false positives, see #5584.
 			bool gl_3_0_in_string = strstr(versionStr, "3.0") && (glslVersionStr && strstr(glslVersionStr, "3.0"));
 			bool gl_3_1_in_string = strstr(versionStr, "3.1") && (glslVersionStr && strstr(glslVersionStr, "3.1"));  // intentionally left out .1
-			if ((gl_3_0_in_string || gl_3_1_in_string) && gl3stubInit()) {
+			if ((gl_3_0_in_string || gl_3_1_in_string)) {
 				gl_extensions.ver[0] = 3;
 				if (gl_3_1_in_string) {
 					gl_extensions.ver[1] = 1;
@@ -294,7 +291,7 @@ void CheckGLExtensions() {
 		} else {
 			// Otherwise, let's trust GL_MAJOR_VERSION.  Note that Mali is intentionally not banned here.
 			if (gl_extensions.ver[0] >= 3) {
-				gl_extensions.GLES3 = gl3stubInit();
+				gl_extensions.GLES3 = true;
 			}
 		}
 #else
@@ -302,6 +299,8 @@ void CheckGLExtensions() {
 		gl_extensions.GLES3 = gl_extensions.ver[0] >= 3;
 #endif
 
+		gl_extensions.GLES3 = gl_extensions.ver[0] >= 3;
+		
 		if (gl_extensions.GLES3) {
 			if (gl_extensions.ver[1] >= 1) {
 				INFO_LOG(G3D, "OpenGL ES 3.1 support detected!\n");

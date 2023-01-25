@@ -26,6 +26,7 @@
 
 #if PPSSPP_ARCH(ARM) || PPSSPP_ARCH(ARM64)
 
+#include <cstring>
 #include <ctype.h>
 
 #include "Common/CommonTypes.h"

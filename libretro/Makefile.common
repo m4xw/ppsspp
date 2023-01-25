@@ -1,8 +1,9 @@
 FFMPEGDIR		= $(CORE_DIR)/ffmpeg
 LIBRETRODIR		= $(CORE_DIR)/libretro
+RETROCOMMONDIR	= $(CORE_DIR)/libretro/libretro-common
 COREDIR			= $(CORE_DIR)/Core
 COMMONDIR		= $(CORE_DIR)/Common
-GPUCOMMONDIR		= $(CORE_DIR)/GPU/Common
+GPUCOMMONDIR    = $(CORE_DIR)/GPU/Common
 GPUDIR			= $(CORE_DIR)/GPU
 EXTDIR			= $(CORE_DIR)/ext
 NATIVEDIR		= $(EXTDIR)/native
@@ -35,7 +36,9 @@ INCFLAGS += \
 	-I$(EXTDIR)/libkirk \
 	-I$(EXTDIR)/xbrz \
 	-I$(EXTDIR)/xxhash \
-	-I$(EXTDIR)/glew
+	-I$(EXTDIR)/glew \
+	-I$(RETROCOMMONDIR)/include \
+	-I$(RETROCOMMONDIR)
 
 INCFLAGS += -I$(EXTDIR)/libzip
 SOURCES_C += \
@@ -164,7 +167,9 @@ else
 		$(EXTDIR)/libzip/zip_random_unix.c
 endif
 
-SOURCES_C += $(LIBRETRODIR)/ext/glew/glew.c
+ifneq ($(PLATFORM_EXT), libnx)
+	SOURCES_C += $(LIBRETRODIR)/ext/glew/glew.c
+endif
 
 SOURCES_C += \
 	$(EXTDIR)/libkirk/AES.c \
@@ -253,19 +258,24 @@ SOURCES_CXX += \
 	$(COMMONDIR)/GPU/OpenGL/GLFeatures.cpp \
 	$(COMMONDIR)/GPU/OpenGL/GLRenderManager.cpp \
 	$(COMMONDIR)/GPU/OpenGL/GLQueueRunner.cpp \
-	$(COMMONDIR)/GPU/OpenGL/DataFormatGL.cpp \
-	$(COMMONDIR)/GPU/Vulkan/thin3d_vulkan.cpp \
-	$(COMMONDIR)/GPU/Vulkan/VulkanQueueRunner.cpp \
-	$(COMMONDIR)/GPU/Vulkan/VulkanRenderManager.cpp \
-	$(COMMONDIR)/GPU/Vulkan/VulkanFrameData.cpp \
-	$(COMMONDIR)/GPU/Vulkan/VulkanLoader.cpp \
-	$(COMMONDIR)/GPU/Vulkan/VulkanContext.cpp \
-	$(COMMONDIR)/GPU/Vulkan/VulkanDebug.cpp \
-	$(COMMONDIR)/GPU/Vulkan/VulkanImage.cpp \
-	$(COMMONDIR)/GPU/Vulkan/VulkanFramebuffer.cpp \
-	$(COMMONDIR)/GPU/Vulkan/VulkanMemory.cpp \
-	$(COMMONDIR)/GPU/Vulkan/VulkanProfiler.cpp \
-	$(COMMONDIR)/GPU/Vulkan/VulkanBarrier.cpp \
+	$(COMMONDIR)/GPU/OpenGL/DataFormatGL.cpp
+
+ifneq ($(platform), libnx)
+	SOURCES_CXX += $(COMMONDIR)/GPU/Vulkan/thin3d_vulkan.cpp \
+				   $(COMMONDIR)/GPU/Vulkan/VulkanQueueRunner.cpp \
+				   $(COMMONDIR)/GPU/Vulkan/VulkanRenderManager.cpp \
+				   $(COMMONDIR)/GPU/Vulkan/VulkanFrameData.cpp \
+				   $(COMMONDIR)/GPU/Vulkan/VulkanLoader.cpp \
+				   $(COMMONDIR)/GPU/Vulkan/VulkanContext.cpp \
+				   $(COMMONDIR)/GPU/Vulkan/VulkanDebug.cpp \
+				   $(COMMONDIR)/GPU/Vulkan/VulkanImage.cpp \
+				   $(COMMONDIR)/GPU/Vulkan/VulkanFramebuffer.cpp \
+				   $(COMMONDIR)/GPU/Vulkan/VulkanMemory.cpp \
+				   $(COMMONDIR)/GPU/Vulkan/VulkanProfiler.cpp \
+				   $(COMMONDIR)/GPU/Vulkan/VulkanBarrier.cpp
+endif
+
+SOURCES_CXX += \
 	$(COMMONDIR)/Input/GestureDetector.cpp \
 	$(COMMONDIR)/Input/InputState.cpp \
 	$(COMMONDIR)/Math/curves.cpp \
@@ -442,7 +452,9 @@ SOURCES_CXX += $(COMMONDIR)/MemArenaAndroid.cpp \
 	       $(EXTDIR)/glslang/glslang/OSDependent/Unix/ossource.cpp \
 		   $(COMMONDIR)/Render/Text/draw_text_android.cpp
 else
+ifneq ($(platform), libnx)
 COREFLAGS += -DVK_USE_PLATFORM_XLIB_KHR
+endif
 SOURCES_CXX += $(COMMONDIR)/MemArenaPosix.cpp \
 	       $(EXTDIR)/glslang/glslang/OSDependent/Unix/ossource.cpp
 endif
@@ -652,7 +664,7 @@ ifeq ($(WITH_DYNAREC),1)
 			ASMFILES   += $(EXTDIR)/libpng17/arm/filter_neon.S
 		endif
 	else ifeq ($(TARGET_ARCH),arm64)
-      DYNAFLAGS += -D_ARCH_64
+      DYNAFLAGS += -D_ARCH_64 -DARM64
       SOURCES_CXX += $(COMMONDIR)/Arm64Emitter.cpp \
 		     $(COREDIR)/MIPS/ARM64/Arm64Asm.cpp \
 		     $(COREDIR)/MIPS/ARM64/Arm64CompALU.cpp \
@@ -721,6 +733,7 @@ SOURCES_C += $(EXTDIR)/udis86/decode.c \
 			 $(EXTDIR)/udis86/syn.c \
 			 $(EXTDIR)/udis86/udis86.c
 
+ifneq ($(platform), libnx)
 INCFLAGS += -I$(EXTDIR)/miniupnp-build
 SOURCES_C += \
     $(EXTDIR)/miniupnp/miniupnpc/addr_is_reserved.c \
@@ -738,6 +751,7 @@ SOURCES_C += \
     $(EXTDIR)/miniupnp/miniupnpc/upnpdev.c \
     $(EXTDIR)/miniupnp/miniupnpc/upnperrors.c \
     $(EXTDIR)/miniupnp/miniupnpc/upnpreplyparse.c
+endif
 
 SOURCES_CXX += \
 	$(GPUDIR)/Vulkan/DrawEngineVulkan.cpp \

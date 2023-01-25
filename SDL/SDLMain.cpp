@@ -58,7 +58,6 @@ SDLJoystick *joystick = NULL;
 #include "SDLGLGraphicsContext.h"
 #include "SDLVulkanGraphicsContext.h"
 
-
 GlobalUIState lastUIState = UISTATE_MENU;
 GlobalUIState GetUIState();
 
@@ -524,15 +523,15 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-#ifdef HAVE_LIBNX
+#if PPSSPP_PLATFORM(SWITCH)
 	socketInitializeDefault();
 	nxlinkStdio();
-#else // HAVE_LIBNX
+#else // PPSSPP_PLATFORM(SWITCH)
 	// Ignore sigpipe.
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
 		perror("Unable to ignore SIGPIPE");
 	}
-#endif // HAVE_LIBNX
+#endif // PPSSPP_PLATFORM(SWITCH)
 
 	PROFILE_INIT();
 	glslang::InitializeProcess();
@@ -547,11 +546,13 @@ int main(int argc, char *argv[]) {
 	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
 #endif
 
+#if !PPSSPP_PLATFORM(SWITCH)
 	if (VulkanMayBeAvailable()) {
 		printf("DEBUG: Vulkan might be available.\n");
 	} else {
 		printf("DEBUG: Vulkan is not available, not using Vulkan.\n");
 	}
+#endif // PPSSPP_PLATFORM(SWITCH)
 
 	SDL_version compiled;
 	SDL_version linked;
@@ -630,6 +631,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "Could not get display mode: %s\n", SDL_GetError());
 		return 1;
 	}
+
 	g_DesktopWidth = displayMode.w;
 	g_DesktopHeight = displayMode.h;
 	g_RefreshRate = displayMode.refresh_rate;
@@ -658,6 +660,9 @@ int main(int argc, char *argv[]) {
 	if (mode & SDL_WINDOW_FULLSCREEN_DESKTOP) {
 		pixel_xres = g_DesktopWidth;
 		pixel_yres = g_DesktopHeight;
+#if PPSSPP_PLATFORM(SWITCH)
+		g_Config.iForceFullScreen = 1;
+#endif // PPSSPP_PLATFORM(SWITCH)
 		if (g_Config.iForceFullScreen == -1)
 			g_Config.bFullScreen = true;
 	} else {
@@ -751,7 +756,6 @@ int main(int argc, char *argv[]) {
 			printf("GL init error '%s'\n", error_message.c_str());
 		}
 		graphicsContext = ctx;
-#if !PPSSPP_PLATFORM(SWITCH)
 	} else if (g_Config.iGPUBackend == (int)GPUBackend::VULKAN) {
 		SDLVulkanGraphicsContext *ctx = new SDLVulkanGraphicsContext();
 		if (!ctx->Init(window, x, y, mode, &error_message)) {
@@ -765,7 +769,6 @@ int main(int argc, char *argv[]) {
 		} else {
 			graphicsContext = ctx;
 		}
-#endif
 	}
 
 	bool useEmuThread = g_Config.iGPUBackend == (int)GPUBackend::OPENGL;
@@ -1255,8 +1258,9 @@ int main(int argc, char *argv[]) {
 
 	glslang::FinalizeProcess();
 	printf("Leaving main\n");
-#ifdef HAVE_LIBNX
+#if PPSSPP_PLATFORM(SWITCH)
 	socketExit();
-#endif
+#endif // PPSSPP_PLATFORM(SWITCH)
+
 	return 0;
 }
