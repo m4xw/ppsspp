@@ -1510,7 +1510,6 @@ else()
 		SDL/SDLJoystick.cpp
 		SDL/SDLMain.cpp
 		SDL/SDLGLGraphicsContext.cpp
-		SDL/SDLVulkanGraphicsContext.cpp
 	)
 	if(NOT USE_LIBNX)
 		set(nativeExtra ${nativeExtra}

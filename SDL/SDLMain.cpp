@@ -1676,7 +1676,7 @@ int main(int argc, char *argv[]) {
 		SDLGLGraphicsContext *glctx = new SDLGLGraphicsContext();
 		if (glctx->Init(window, x, y, w, h, mode, &error_message, force_gl_version) != 0) {
 			// Let's try the fallback once per process run.
-			fprintf(stderr, "GL init error '%s' - falling back to Vulkan\n", error_message.c_str());
+			/*fprintf(stderr, "GL init error '%s' - falling back to Vulkan\n", error_message.c_str());
 			g_Config.iGPUBackend = (int)GPUBackend::VULKAN;
 			SetGPUBackend((GPUBackend)g_Config.iGPUBackend);
 			delete glctx;
@@ -1687,7 +1687,7 @@ int main(int argc, char *argv[]) {
 				fprintf(stderr, "Vulkan fallback failed: %s\n", error_message.c_str());
 				return 1;
 			}
-			graphicsContext = vkctx;
+			graphicsContext = vkctx;*/
 		} else {
 			graphicsContext = glctx;
 		}
