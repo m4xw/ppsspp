@@ -362,6 +362,7 @@ static RetroOption<int> ppsspp_frameskip("ppsspp_frameskip", "Frameskip", { "Off
 static RetroOption<int> ppsspp_frameskiptype("ppsspp_frameskiptype", "Frameskip Type", { {"Number of frames", 0}, {"Percent of FPS", 1} });
 static RetroOption<int> ppsspp_internal_resolution("ppsspp_internal_resolution", "Internal Resolution (Restart)", 1, { "480x272", "960x544", "1440x816", "1920x1088", "2400x1360", "2880x1632", "3360x1904", "3840x2176", "4320x2448", "4800x2720" });
 static RetroOption<int> ppsspp_button_preference("ppsspp_button_preference", "Confirmation Button", { { "Cross", PSP_SYSTEMPARAM_BUTTON_CROSS }, { "Circle", PSP_SYSTEMPARAM_BUTTON_CIRCLE } });
+static RetroOption<bool> ppsspp_analog_is_circle("ppsspp_analog_is_circle", "Analog Circl vs Square Gate Compensation", false);
 static RetroOption<bool> ppsspp_fast_memory("ppsspp_fast_memory", "Fast Memory (Speedhack)", true);
 static RetroOption<bool> ppsspp_block_transfer_gpu("ppsspp_block_transfer_gpu", "Block Transfer GPU", true);
 static RetroOption<int> ppsspp_inflight_frames("ppsspp_inflight_frames", "Buffered frames (Slower, less lag, restart)", { { "Up to 2", 2 }, { "Up to 1", 1 }, { "No buffer", 0 }, });
@@ -394,6 +395,7 @@ void retro_set_environment(retro_environment_t cb)
    vars.push_back(ppsspp_locked_cpu_speed.GetOptions());
    vars.push_back(ppsspp_language.GetOptions());
    vars.push_back(ppsspp_button_preference.GetOptions());
+   vars.push_back(ppsspp_analog_is_circle.GetOptions());
    vars.push_back(ppsspp_rendering_mode.GetOptions());
    vars.push_back(ppsspp_gpu_hardware_transform.GetOptions());
    vars.push_back(ppsspp_texture_anisotropic_filtering.GetOptions());
@@ -920,6 +922,31 @@ static void retro_input(void)
    float y_left = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y) / -32767.0f;
    float x_right = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X) / 32767.0f;
    float y_right = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y) / -32767.0f;
+
+   __CtrlSetAnalogXY(CTRL_STICK_LEFT, x_left, y_left);
+   __CtrlSetAnalogXY(CTRL_STICK_RIGHT, x_right, y_right);
+
+   // Analog circle vs square gate compensation
+   // copied from ControlMapper.cpp's ConvertAnalogStick function
+   const bool isCircular = g_Config.bAnalogIsCircular;
+
+   float norm = std::max(fabsf(x_left), fabsf(y_left));
+
+   if (norm == 0.0f)
+      return;
+
+   if (isCircular) {
+      float newNorm = sqrtf(x_left * x_left + y_left * y_left);
+      float factor = newNorm / norm;
+      x_left *= factor;
+      y_left *= factor;
+      norm = newNorm;
+   }
+
+   float mappedNorm = norm;
+   x_left = std::clamp(x_left / norm * mappedNorm, -1.0f, 1.0f);
+   y_left = std::clamp(y_left / norm * mappedNorm, -1.0f, 1.0f);
+   
    __CtrlSetAnalogXY(CTRL_STICK_LEFT, x_left, y_left);
    __CtrlSetAnalogXY(CTRL_STICK_RIGHT, x_right, y_right);
 }
